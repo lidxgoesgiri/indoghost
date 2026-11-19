@@ -3,6 +3,7 @@ import { asset } from '../assets';
 import { CampaignProvider, useCampaign } from '../campaign/Campaign';
 import { modeName, nights, number } from '../campaign/story';
 import Story from '../story/Story';
+import { Bestiary } from './Bestiary';
 import { Encounters } from './Encounters';
 import { FieldGuide } from './FieldGuide';
 import { Icon } from './Icon';
@@ -109,6 +110,7 @@ function Village() {
             setGuideOpen(true);
           }}
         />
+        <Bestiary lang={status.lang} open={open} playLabel={title} />
         <Encounters lang={status.lang} open={open} />
       </main>
       <footer className="village-footer">

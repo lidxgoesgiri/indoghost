@@ -329,13 +329,14 @@ export default function Story({
     const target = track.start + ((track.end - track.start) * to) / last;
     smooth.current?.scrollTo(target, { duration: 0.85 });
   };
-  const skip = () => {
-    const dest = document.getElementById('encounters');
+  const jump = (target: string, gentle = false) => {
+    const dest = document.getElementById(target);
     if (!dest) return;
     dest.focus({ preventScroll: true });
-    if (smooth.current) smooth.current.scrollTo(dest, { immediate: true });
-    else dest.scrollIntoView({ behavior: 'instant', block: 'start' });
+    if (smooth.current) smooth.current.scrollTo(dest, gentle ? { duration: 1.1 } : { immediate: true });
+    else dest.scrollIntoView({ behavior: gentle && !reducedMotion ? 'smooth' : 'instant', block: 'start' });
   };
+  const skip = () => jump('encounters');
 
   return (
     <section
@@ -497,15 +498,15 @@ export default function Story({
             <button
               type="button"
               className="story-explore"
-              onClick={() => (index === last ? skip() : go(index + 1))}
+              onClick={() => (index === last ? jump('bestiary', true) : go(index + 1))}
             >
               <span className="story-scroll-icon">
                 <StoryMark kind="down" />
               </span>
               {index === last
                 ? id
-                  ? 'Pilih permainan'
-                  : 'Choose an encounter'
+                  ? 'Kenali penghuni desa'
+                  : 'Meet who walks the village'
                 : reducedMotion
                   ? id
                     ? 'Bab berikutnya'
