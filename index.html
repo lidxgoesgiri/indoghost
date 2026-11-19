@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101310" />
+    <meta name="description" content="Jalani ronda selama tujuh malam di Desa Kalisepi. Kisah horor rakyat Nusantara dengan tiga permainan yang saling terhubung." />
+    <link rel="icon" href="%BASE_URL%assets/kayon.svg" type="image/svg+xml" />
+    <link rel="preload" as="image" href="%BASE_URL%assets/kalisepi.webp" />
+    <title>IndoGhost — Desa Kalisepi</title>
+  </head>
+  <body style="margin:0;background:#101310;color:#f3eee2">
+    <div id="root"></div>
+    <noscript>Aktifkan JavaScript untuk memasuki Desa Kalisepi. Enable JavaScript to play.</noscript>
+    <template id="file-transfer">
+      <main style="max-width:36rem;margin:12vh auto;padding:1.5rem;font:17px/1.7 system-ui">
+        <h1 style="font:48px Georgia,serif">IndoGhost</h1>
+        <p>Versi baru dimainkan melalui alamat web lokal. Untuk membawa jurnal dari permainan berkas lama, unduh salinannya di sini. Di dalam game, buka <strong>Jurnal</strong> dan impor salinan tersebut.</p>
+        <button id="export-save" style="padding:12px 16px;cursor:pointer">Unduh jurnal lama</button>
+        <p id="export-message" role="status"></p>
+        <p>Jalankan <code>npm start</code> di folder proyek, lalu <a href="http://127.0.0.1:4173/" style="color:#efc78c">buka Desa Kalisepi</a>.</p>
+      </main>
+    </template>
+    <script>
+      // Only the original file URL can read saves created by the direct-file edition.
+      if (location.protocol === 'file:') {
+        document.getElementById('root').append(document.getElementById('file-transfer').content.cloneNode(true));
+        document.getElementById('export-save').onclick = function () {
+          var message = document.getElementById('export-message');
+          try {
+            var preferences = null, nights = [], partial = false;
+            var storedPreferences = localStorage.getItem('indoghost.preferences.v1');
+            if (storedPreferences) {
+              try {
+                var saved = JSON.parse(storedPreferences);
+                if (saved && ['id','en'].includes(saved.lang) && ['quiet','balanced','full'].includes(saved.horror) &&
+                    typeof saved.sound === 'boolean' && typeof saved.consent === 'boolean' && typeof saved.reducedMotion === 'boolean' &&
+                    Number.isFinite(saved.level) && saved.level >= 0 && saved.level <= 1) preferences = saved;
+                else partial = true;
+              } catch { partial = true; }
+            }
+            for (var i = 1; i <= 7; i++) {
+              var raw = localStorage.getItem('indoghost.night.v1.' + i);
+              if (!raw) break;
+              try {
+                var record = JSON.parse(raw);
+                var clue = ({2:'brass-key',4:'pavilion-mark',6:'dawn-seal'})[i];
+                if (!record || !Number.isSafeInteger(record.coins) || record.coins < 0 || !Number.isSafeInteger(record.flame) ||
+                    record.flame < -1 || (record.clue != null && (typeof record.clue !== 'string' || record.clue !== clue))) { partial = true; break; }
+                nights.push(record);
+              } catch { partial = true; break; }
+            }
+            if (!nights.length && !preferences) {
+              message.textContent = 'Belum ada jurnal pada alamat berkas dan profil browser ini.';
+              return;
+            }
+            var file = new Blob([JSON.stringify({format:'indoghost-v1', preferences:preferences, nights:nights})], {type:'application/json'});
+            var url = URL.createObjectURL(file), link = document.createElement('a');
+            link.href = url; link.download = 'indoghost-jurnal.json'; link.click();
+            setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+            message.textContent = 'Salinan jurnal disiapkan. Malam tercatat: ' + nights.length + '.' +
+              (partial ? ' Bagian yang rusak dilewati. Jurnal asli tetap tersimpan.' : '');
+          } catch (error) {
+            message.textContent = 'Browser tidak dapat membaca jurnal di alamat berkas ini. Coba profil browser tempat kamu dulu bermain.';
+          }
+        };
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

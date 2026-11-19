@@ -1,0 +1,157 @@
+.chase-game {
+  --chase-ink: #eae6d3;
+  --chase-dim: #b8b8a8;
+  --chase-gold: #e6ba73;
+  --chase-line: #5d604e;
+  color: var(--chase-ink);
+  width: min(100%, 860px);
+  margin-inline: auto;
+  display: grid;
+  gap: 9px;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+.chase-game, .chase-game * { box-sizing: border-box; }
+.chase-game p { margin: 0; }
+.chase-hud {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--chase-line);
+  background: #1e251f;
+}
+.chase-hud > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1px 10px;
+  padding: 8px clamp(8px, 2vw, 20px);
+}
+.chase-hud > div + div { border-inline-start: 1px solid #4e5344; }
+.chase-hud span, .chase-legend, .chase-keys {
+  font: 500 11px/1.45 var(--font-mono, ui-monospace, monospace);
+  letter-spacing: .04em;
+}
+.chase-hud span { color: var(--chase-dim); }
+.chase-hud strong {
+  font: 600 clamp(13px, 1.7vw, 17px)/1.25 var(--font-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--chase-gold);
+}
+.chase-hud [data-state="near"] { color: #ffb29c; }
+.chase-hud [data-state="ward"] { color: #b5d1af; }
+.chase-stage {
+  width: 100%;
+  position: relative;
+  border: 1px solid #6e725e;
+  background: #333c33;
+}
+.chase-stage::before, .chase-stage::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border: solid #e0bc7c;
+}
+.chase-stage::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.chase-stage::after { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+.chase-stage canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 17 / 11;
+  image-rendering: auto;
+  touch-action: manipulation;
+}
+.chase-game :is(canvas,button):focus-visible { outline: 3px solid #f8d594; outline-offset: 2px; z-index: 2; }
+.chase-legend { display: flex; flex-wrap: wrap; gap: 6px 17px; color: var(--chase-dim); }
+.chase-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.chase-legend i { display: inline-block; width: 10px; height: 10px; }
+.chase-token-player { background: #d4b681; clip-path: polygon(50% 5%,100% 65%,75% 68%,72% 97%,27% 97%,25% 68%,0 65%); }
+.chase-token-coin { background: #57492f; border: 3px solid #edc87e; border-radius: 50%; }
+.chase-token-ghost { background: #c8b2a4; border-radius: 50% 50% 40% 40%; border-bottom: 2px solid #bb7f68; }
+.chase-token-gate { border: solid #c4a577; border-width: 3px 2px 0; }
+.chase-objective { color: var(--chase-ink); font: 500 14px/1.5 var(--font-body, system-ui, sans-serif); }
+.chase-inputs {
+  display: flex;
+  gap: 10px 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #474d3e;
+}
+.chase-instructions { display: grid; gap: 3px; }
+.chase-keys { color: var(--chase-ink); }
+.chase-hint { color: var(--chase-dim); font: 400 13px/1.45 var(--font-body, system-ui, sans-serif); }
+.chase-pad { display: none; }
+.chase-game .chase-lamp, .chase-game .chase-dir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  border: 1px solid #95835d;
+  border-radius: 2px;
+  color: #f4d39c;
+  background: #292b22;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.chase-game .chase-lamp {
+  gap: 7px;
+  padding: 0 14px;
+  font: 600 13px/1.3 var(--font-body, system-ui, sans-serif);
+  touch-action: manipulation;
+}
+.chase-lamp-mark {
+  position: relative;
+  width: 12px;
+  height: 13px;
+  border: 1.5px solid currentColor;
+  border-radius: 2px 2px 3px 3px;
+}
+.chase-lamp-mark::before, .chase-lamp-mark::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.chase-lamp-mark::before {
+  width: 6px; height: 4px; top: -5px; border: 1px solid currentColor;
+  border-bottom: 0; border-radius: 3px 3px 0 0;
+}
+.chase-lamp-mark::after {
+  width: 4px; height: 6px; bottom: 2px; background: currentColor;
+  border-radius: 70% 30% 50% 50%;
+}
+.chase-lamp kbd {
+  margin-inline-start: 3px; padding: 1px 4px; border: 1px solid #918261;
+  border-radius: 2px; color: #e2cc9e; font: 500 10px/1.5 ui-monospace, monospace;
+}
+.chase-game .chase-lamp:disabled { color: #acaa97; border-color: #626551; cursor: default; }
+.chase-game .chase-lamp:not(:disabled):hover, .chase-game .chase-dir:hover { border-color: #e4c391; }
+.chase-game .chase-lamp:not(:disabled):active, .chase-game .chase-dir:active { background: #4c4935; }
+.chase-game .chase-dir { padding: 0; font: 22px/1 var(--font-body, system-ui, sans-serif); }
+.chase-dir-up { grid-area: 1 / 2; }
+.chase-dir-left { grid-area: 2 / 1; }
+.chase-dir-down { grid-area: 2 / 2; }
+.chase-dir-right { grid-area: 2 / 3; }
+.chase-sr {
+  position: absolute; width: 1px; height: 1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+@media (pointer: coarse), (max-width: 680px) {
+  .chase-pad { display: grid; grid-template-columns: repeat(3,44px); grid-template-rows: repeat(2,44px); gap: 3px; }
+  .chase-instructions, .chase-lamp kbd { display: none; }
+}
+@media (max-width: 540px) {
+  .chase-hud > div { display: grid; align-content: center; justify-content: start; gap: 3px; padding: 6px 8px; }
+  .chase-hud span, .chase-legend { font-size: 10px; }
+  .chase-legend { gap: 5px 11px; }
+  .chase-game { gap: 7px; }
+  .chase-objective, .chase-game .chase-lamp { font-size: 12px; }
+  .chase-game .chase-lamp { padding-inline: 8px; }
+}
