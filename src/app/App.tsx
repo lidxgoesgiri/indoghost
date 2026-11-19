@@ -5,6 +5,7 @@ import { modeName, nights, number } from '../campaign/story';
 import Story from '../story/Story';
 import { Bestiary } from './Bestiary';
 import { Encounters } from './Encounters';
+import { Flyers } from './Flyers';
 import { FieldGuide } from './FieldGuide';
 import { Icon } from './Icon';
 
@@ -126,6 +127,7 @@ function Village() {
           </button>
         </div>
       </footer>
+      <Flyers active={!status.reducedMotion && !modalOpen && !guideOpen} dread={status.horror} />
       {guideOpen && <FieldGuide lang={status.lang} close={closeGuide} />}
     </>
   );

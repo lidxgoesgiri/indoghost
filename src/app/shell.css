@@ -1145,12 +1145,156 @@ html[data-reduced='true'] .creature-art img {
     right: -30px;
   }
 }
-html[data-reduced='true'] :is(.ghost, .ghost *) {
+
+/* ---- Things that fly across the page ------------------------------------ */
+.flyers {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  overflow: hidden;
+  pointer-events: none;
+}
+.flight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation-name: flight-across;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+@keyframes flight-across {
+  from {
+    transform: translate3d(var(--start), var(--from), 0) scale(calc(var(--scale) * var(--fit, 1)));
+  }
+  to {
+    transform: translate3d(var(--end), var(--to), 0) scale(calc(var(--scale) * var(--fit, 1)));
+  }
+}
+@media (max-width: 660px) {
+  .flyers {
+    --fit: 0.62;
+  }
+}
+.flight-face {
+  position: relative;
+  transform: scaleX(var(--face));
+}
+.bat {
+  position: absolute;
+  animation: bat-bob 0.9s ease-in-out infinite alternate;
+}
+.bat-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 0 6px #ffb07a55);
+}
+.bat-art path {
+  fill: #0a0d0c;
+  stroke: #e4a08180;
+  stroke-width: 0.7;
+}
+.bat-eye {
+  fill: #ff7a45;
+}
+.bat-wing {
+  transform-box: fill-box;
+  animation: bat-flap var(--flap, 0.18s) ease-in-out infinite alternate;
+}
+.bat-wing-left {
+  transform-origin: 100% 40%;
+}
+.bat-wing-right {
+  transform-origin: 0% 40%;
+}
+@keyframes bat-flap {
+  from {
+    transform: scaleY(1) rotate(0deg);
+  }
+  to {
+    transform: scaleY(-0.45) rotate(0deg);
+  }
+}
+@keyframes bat-bob {
+  from {
+    transform: translate3d(0, -7px, 0);
+  }
+  to {
+    transform: translate3d(0, 7px, 0);
+  }
+}
+.kuyang {
+  width: clamp(150px, 15vw, 230px);
+  opacity: 0.82;
+  filter: drop-shadow(0 0 18px #ff4a2a40);
+  animation: kuyang-glide 2.8s ease-in-out infinite alternate;
+}
+.kuyang-hair {
+  transform-box: fill-box;
+  transform-origin: 100% 50%;
+  animation: kuyang-hair 0.9s ease-in-out infinite alternate;
+}
+.kuyang-drops {
+  animation: kuyang-drip 1.6s ease-in infinite;
+}
+@keyframes kuyang-hair {
+  from {
+    transform: scaleY(0.9) skewY(-2deg);
+  }
+  to {
+    transform: scaleY(1.08) skewY(2deg);
+  }
+}
+@keyframes kuyang-drip {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(-10px, 26px, 0);
+    opacity: 0;
+  }
+}
+.kuyang-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.kuyang-trails {
+  animation: kuyang-trail 1.4s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: 70% 0%;
+}
+@keyframes kuyang-glide {
+  from {
+    transform: translate3d(0, -3vh, 0) rotate(-4deg);
+  }
+  to {
+    transform: translate3d(0, 3vh, 0) rotate(3deg);
+  }
+}
+@keyframes kuyang-trail {
+  from {
+    transform: skewX(-6deg) scaleY(0.95);
+  }
+  to {
+    transform: skewX(7deg) scaleY(1.06);
+  }
+}
+html[data-reduced='true'] :is(.ghost, .ghost *, .flyers) {
   animation: none !important;
+}
+html[data-reduced='true'] .flyers {
+  display: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .ghost,
   .ghost * {
     animation: none !important;
+  }
+  .flyers {
+    display: none;
   }
 }
