@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { asset } from '../assets';
 import { CampaignProvider, useCampaign } from '../campaign/Campaign';
+import { modeName, nights, number } from '../campaign/story';
 import Story from '../story/Story';
 import { Encounters } from './Encounters';
 import { FieldGuide } from './FieldGuide';
@@ -20,6 +21,15 @@ function Village() {
       : id
         ? 'Mulai ronda'
         : 'Start night watch';
+  // Say what the primary action starts, so the campaign is never confused with practice.
+  const hint = status.completedAll
+    ? id
+      ? 'Tujuh malam tuntas'
+      : 'All seven nights cleared'
+    : (id ? 'Malam ' : 'Night ') +
+      number(status.next) +
+      (id ? ' dari 07 · ' : ' of 07 · ') +
+      modeName(nights[status.next - 1].mode, status.lang);
   useEffect(() => {
     document.documentElement.lang = status.lang;
     document.documentElement.dataset.reduced = String(status.reducedMotion);
@@ -87,8 +97,11 @@ function Village() {
           reducedMotion={status.reducedMotion}
           suspended={modalOpen || guideOpen}
           dread={status.horror}
+          sound={status.sound}
           playLabel={title}
+          playHint={hint}
           onPlay={(trigger) => open('play', trigger)}
+          onSound={() => setSound(true)}
           onScene={scene}
           onBeat={sting}
           onGuide={(trigger) => {

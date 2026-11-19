@@ -18,9 +18,13 @@ interface Props {
   reducedMotion: boolean;
   suspended: boolean;
   dread: Dread;
+  sound: boolean;
   playLabel: string;
+  /** What the primary action actually starts, e.g. "Night 01 of 07 · Tuyul Chase". */
+  playHint: string;
   onPlay: (trigger: HTMLElement) => void;
   onGuide: (trigger: HTMLElement) => void;
+  onSound: () => void;
   /** The chapter whose ambience should play, or null when the story is out of view or covered. */
   onScene: (chapter: number | null) => void;
   onBeat: (chapter: number) => void;
@@ -39,11 +43,12 @@ class SceneBoundary extends Component<{ onFailure: () => void; children: ReactNo
   }
 }
 
-function StoryMark({ kind }: { kind: 'play' | 'book' | 'down' | 'pin' }) {
+function StoryMark({ kind }: { kind: 'play' | 'book' | 'down' | 'pin' | 'ear' }) {
   const path = {
     play: <path d="m7 4 13 8-13 8z" fill="currentColor" stroke="none" />,
     book: <path d="M12 6C8 4 5 4 3 5v13c3-.8 6.4-.5 9 1.4 2.6-1.9 6-2.2 9-1.4V5c-2-.9-5-.9-9 1Zm0 0v13" />,
     down: <path d="M12 3v17m-6-6 6 6 6-6" />,
+    ear: <path d="M4 15v-3a8 8 0 0 1 16 0v3M4 15a2 2 0 0 0 2 2h1v-5H6a2 2 0 0 0-2 2Zm16 0a2 2 0 0 1-2 2h-1v-5h1a2 2 0 0 1 2 2Z" />,
     pin: (
       <>
         <path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z" />
@@ -85,9 +90,12 @@ export default function Story({
   reducedMotion,
   suspended,
   dread,
+  sound,
   playLabel,
+  playHint,
   onPlay,
   onGuide,
+  onSound,
   onScene,
   onBeat,
 }: Props) {
@@ -412,15 +420,22 @@ export default function Story({
               <p className="story-narration">{chapter.text[lang]}</p>
             </div>
             <div className="story-actions">
-              <button
-                type="button"
-                className="story-play"
-                data-open="play"
-                onClick={(e) => onPlay(e.currentTarget)}
-              >
-                <StoryMark kind="play" />
-                {playLabel}
-              </button>
+              <span className="story-play-wrap">
+                <button
+                  type="button"
+                  className="story-play"
+                  data-open="play"
+                  data-finale={index === last ? '' : undefined}
+                  aria-describedby="story-play-hint"
+                  onClick={(e) => onPlay(e.currentTarget)}
+                >
+                  <StoryMark kind="play" />
+                  {playLabel}
+                </button>
+                <span className="story-play-hint" id="story-play-hint">
+                  {playHint}
+                </span>
+              </span>
               <button
                 type="button"
                 className="story-guide"
@@ -431,6 +446,25 @@ export default function Story({
                 {id ? 'Cara bermain' : 'How to play'}
               </button>
             </div>
+            {!sound && (
+              <button
+                type="button"
+                className="story-listen"
+                onClick={() => {
+                  onSound();
+                  // The invitation disappears once sound is on; keep keyboard focus on the main action.
+                  requestAnimationFrame(() =>
+                    section.current?.querySelector<HTMLElement>('.story-play')?.focus({ preventScroll: true }),
+                  );
+                }}
+              >
+                <StoryMark kind="ear" />
+                <span>
+                  {id ? 'Nyalakan suara desa' : 'Turn on the village sound'}
+                  <small>{id ? 'Paling seram dengan headphone' : 'Best with headphones'}</small>
+                </span>
+              </button>
+            )}
           </div>
           <div className="story-navigation">
             <div className="story-place">
