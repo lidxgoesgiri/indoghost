@@ -37,7 +37,7 @@ test('partitur Web Audio mengikuti ancaman, tiga bus, pause dan pilihan jumpscar
   await page.waitForTimeout(1450);
   expect(await notes()).toEqual(paused);
   await dialog.getByRole('button',{name:'Settings',exact:true}).click();
-  await dialog.locator('select').first().selectOption('full');
+  await dialog.locator('input[name=horror][value=full]').check();
   await dialog.locator('.igc-mixer summary').click();
   await dialog.getByRole('slider',{name:'Music',exact:true}).fill('35');
   await dialog.getByRole('slider',{name:'Ambience',exact:true}).fill('40');
@@ -56,7 +56,7 @@ test('partitur Web Audio mengikuti ancaman, tiga bus, pause dan pilihan jumpscar
   await expect(dialog.locator('[data-stat=lives]')).toHaveText('2 / 2');
   await page.keyboard.press('Escape');
   await dialog.getByRole('button',{name:'Settings',exact:true}).click();
-  await dialog.locator('select').first().selectOption('quiet');
+  await dialog.locator('input[name=horror][value=quiet]').check();
   await dialog.getByRole('button',{name:'Save settings'}).click();
   await dialog.getByRole('button',{name:'Resume',exact:true}).click();
   await dialog.locator('[data-index="0"]').click();

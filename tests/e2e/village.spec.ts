@@ -95,7 +95,7 @@ for (const intensity of ['quiet', 'balanced', 'full']) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await page.locator('#encounters [data-open=sweeper]').click();
-    await page.locator('.igc-form select').first().selectOption(intensity);
+    await page.locator('.igc-form input[name=horror][value=' + intensity + ']').check();
     await page.locator('.igc-form button[type=submit]').click();
     await page.locator('.igc-actions .igc-primary').click();
     await page.locator('.sweep-tile[data-index="0"]').click();

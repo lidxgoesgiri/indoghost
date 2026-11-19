@@ -103,8 +103,9 @@ html:has(.igc-dialog[open]) { overflow: hidden; }
   transition: background-color .15s ease, border-color .15s ease;
 }
 .igc-dialog .igc-button:hover { border-color: var(--igc-bone); background: #283026; }
-.igc-dialog .igc-primary { background: #e9debd; border-color: #e9debd; color: #101511; }
-.igc-dialog .igc-primary:hover { color: #0b100b; background: #faedc9; border-color: #faedc9; }
+/* One primary action language across the landing page and every dialog: the lantern copper. */
+.igc-dialog .igc-primary { background: #954130; border-color: #cf8065; color: #fff5e6; box-shadow: 0 0 26px -8px #e2683f99; }
+.igc-dialog .igc-primary:hover { color: #fff; background: #a84e38; border-color: #f0a889; }
 .igc-dialog .igc-top-action { padding: 8px 0 8px 10px; color: var(--igc-soft); background: transparent; border-color: transparent; min-width: 46px; }
 .igc-dialog .igc-top-action:hover { color: var(--igc-bone); border-color: transparent; background: transparent; }
 .igc-control-icon { font: 21px/1 var(--igc-sans); }
@@ -131,7 +132,60 @@ html:has(.igc-dialog[open]) { overflow: hidden; }
 .igc-volume-input { display: flex; justify-content: flex-end; align-items: center; gap: 9px; width: min(48%, 210px); }
 .igc-volume input { width: calc(100% - 42px); min-width: 28px; accent-color: #e1c995; height: 32px; }
 .igc-volume output { font: 12px var(--igc-mono); color: var(--igc-soft); }
-.igc-form > .igc-primary { margin-top: 14px; }
+.igc-form > .igc-primary { margin-top: 22px; min-height: 50px; padding-inline: 26px; font-size: 15px; }
+/* Intensity as three visible choices: each card shows how many flames it lights. */
+.igc-fear { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; border: 0; padding: 0; margin: 0 0 18px; min-width: 0; }
+.igc-fear legend { padding: 0; margin-bottom: 10px; font: 500 11px/1.6 var(--igc-mono); color: var(--igc-soft); text-transform: uppercase; letter-spacing: .13em; }
+.igc-fear-option {
+  position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 148px; padding: 16px 14px 14px;
+  border: 1px solid var(--igc-line); background: #0d130f; cursor: pointer;
+  transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+}
+.igc-fear-option:hover { border-color: #7c8070; background: #121a14; }
+.igc-fear-option:has(input:checked) { border-color: #cf8065; background: linear-gradient(180deg, #2a1712, #120f0c 70%); box-shadow: inset 0 0 0 1px #cf806555, 0 14px 30px -22px #e2683f; }
+.igc-fear-option:has(input:focus-visible) { outline: 2px solid var(--igc-amber); outline-offset: 3px; }
+.igc-fear-option input { position: absolute; top: 14px; right: 14px; appearance: none; width: 16px; height: 16px; margin: 0; border: 1px solid #7c8070; border-radius: 50%; background: #0b100e; cursor: pointer; }
+.igc-fear-option input:checked { border-color: #f0a889; background: radial-gradient(circle, #f0a889 0 4px, transparent 4.5px); }
+.igc-fear-option input:focus-visible { outline: none; }
+.igc-fear-option strong { font: 500 23px/1.08 var(--igc-serif); color: var(--igc-bone); letter-spacing: -.02em; margin-top: 4px; }
+.igc-fear-option small { font-size: 12.5px; line-height: 1.5; color: var(--igc-soft); }
+.igc-fear-flame { display: flex; gap: 5px; height: 18px; align-items: flex-end; }
+.igc-fear-flame i { width: 8px; height: 13px; border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%; background: #3b4038; }
+.igc-fear-option[data-level=quiet] .igc-fear-flame i:nth-child(1),
+.igc-fear-option[data-level=balanced] .igc-fear-flame i:nth-child(-n + 2),
+.igc-fear-option[data-level=full] .igc-fear-flame i { background: linear-gradient(#ffd391, #e2683f); box-shadow: 0 0 9px #e2683f88; }
+.igc-fear-option:has(input:checked) .igc-fear-flame i { animation: igc-flicker 2.4s ease-in-out infinite; }
+.igc-fear-option:has(input:checked) .igc-fear-flame i:nth-child(2) { animation-delay: -.7s; }
+.igc-fear-option:has(input:checked) .igc-fear-flame i:nth-child(3) { animation-delay: -1.3s; }
+@keyframes igc-flicker { 50% { transform: scaleY(.84) translateY(1px); opacity: .82; } }
+/* Switches replace the browser checkboxes. */
+.igc-switch input[type=checkbox] {
+  appearance: none; flex: none; position: relative; width: 44px; height: 24px; margin: 0; border-radius: 12px;
+  border: 1px solid #6b7262; background: #1a221c; cursor: pointer; transition: background-color .2s ease, border-color .2s ease;
+}
+.igc-switch input[type=checkbox]::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: #b4b9ad; transition: transform .22s cubic-bezier(.2,.7,.2,1), background-color .2s ease;
+}
+.igc-switch input[type=checkbox]:checked { background: #954130; border-color: #cf8065; }
+.igc-switch input[type=checkbox]:checked::after { transform: translateX(20px); background: #fff5e6; }
+.igc-listen { border: 1px solid var(--igc-line); padding: 14px 16px; background: #0d130f; }
+.igc-listen:has(input:checked) { border-color: #96714e; }
+.igc-listen > span, .igc-setting > span:first-child { display: flex; flex-direction: column; gap: 3px; }
+.igc-listen small { font-size: 12.5px; color: var(--igc-soft); }
+.igc-more { margin-top: 12px; border-top: 1px solid var(--igc-line); }
+.igc-more > summary { min-height: 44px; padding: 11px 0; cursor: pointer; color: #dfd5ba; font-size: 14px; }
+.igc-more[open] > summary { color: var(--igc-bone); }
+.igc-dialog.igc-still .igc-fear-flame i { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .igc-fear-flame i { animation: none !important; } }
+@media (max-width: 580px) {
+  .igc-fear { grid-template-columns: 1fr; gap: 8px; }
+  .igc-fear-option { min-height: 0; display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; padding: 12px 40px 12px 14px; }
+  .igc-fear-flame { grid-row: span 2; flex-direction: column-reverse; height: auto; gap: 2px; }
+  .igc-fear-flame i { width: 7px; height: 10px; }
+  .igc-fear-option strong { margin: 0; font-size: 21px; }
+  .igc-fear-option input { top: 50%; transform: translateY(-50%); }
+}
 .igc-mixer, .igc-restore { border-top:1px solid var(--igc-line); }
 .igc-restore { margin-top:26px; }
 .igc-mixer summary, .igc-restore summary { min-height:44px; padding:11px 0; cursor:pointer; color:var(--igc-alpha, #dfd5ba); font-size:14px; }

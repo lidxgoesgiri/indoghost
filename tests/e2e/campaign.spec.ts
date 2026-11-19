@@ -61,7 +61,7 @@ test('tujuh malam beruntun dari jurnal kosong sampai epilog dan reload', async (
   await page.goto('/');
   expect(await page.evaluate(() => localStorage.getItem('indoghost.night.v1.1'))).toBeNull();
   await page.locator('[data-open=play]').first().click();
-  await page.locator('.igc-form select').first().selectOption('quiet');
+  await page.locator('.igc-form input[name=horror][value=quiet]').check();
   await page.locator('.igc-form button[type=submit]').click();
   for (let night = 1; night <= 7; night++) {
     await test.step('Malam ' + night, async () => {

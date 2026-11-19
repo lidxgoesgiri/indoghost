@@ -66,6 +66,30 @@ export function Notice({ notice, t }: { notice: SaveState['notice']; t: T }) {
     </p>
   );
 }
+// Each level says what actually changes, so the choice is about consequences, not labels.
+const fears: [Preferences['horror'], string, string, string, string][] = [
+  [
+    'quiet',
+    'No jumpscares',
+    'Tanpa jumpscare',
+    'Atmosphere only. A defeat goes straight to the result, in silence.',
+    'Hanya suasana. Saat kalah, hasil langsung tampil tanpa suara.'
+  ],
+  [
+    'balanced',
+    'Balanced horror',
+    'Horor seimbang',
+    'The village stirs now and then. A brief shadow follows a defeat.',
+    'Desa sesekali bergerak. Bayangan singkat muncul setelah kalah.'
+  ],
+  [
+    'full',
+    'Full horror',
+    'Horor penuh',
+    'It finds you more often, louder. A looming silhouette after a defeat.',
+    'Lebih sering, lebih keras. Siluet mendekat setelah kalah.'
+  ]
+];
 export function Settings({
   prefs,
   gate,
@@ -98,6 +122,33 @@ export function Settings({
       </span>
     </label>
   );
+  const secondary = (
+    <>
+      <label className="igc-setting igc-switch">
+        <span>{t('Reduce motion', 'Kurangi gerakan')}</span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={draft.reducedMotion}
+          onChange={(e) => update('reducedMotion', e.currentTarget.checked)}
+        />
+      </label>
+      {slider('level', t('Volume', 'Volume'))}
+      <details className="igc-mixer">
+        <summary>{t('Audio mix', 'Campuran audio')}</summary>
+        {slider('music', t('Music', 'Musik'))}
+        {slider('ambience', t('Ambience', 'Suasana'))}
+        {slider('effects', t('Sound effects', 'Efek suara'))}
+      </details>
+      <label className="igc-setting">
+        <span>{t('Language', 'Bahasa')}</span>
+        <select value={draft.lang} onChange={(e) => update('lang', e.currentTarget.value as Lang)}>
+          <option value="en">English</option>
+          <option value="id">Bahasa Indonesia</option>
+        </select>
+      </label>
+    </>
+  );
   return (
     <>
       <Heading
@@ -116,71 +167,58 @@ export function Settings({
       </Heading>
       <form
         className="igc-form"
+        data-gate={gate ? '' : undefined}
         onSubmit={(e) => {
           e.preventDefault();
           onSave({ ...draft, consent: draft.consent || gate });
         }}
       >
-        <label className="igc-setting">
-          <span>{t('Horror intensity', 'Intensitas horor')}</span>
-          <select
-            value={draft.horror}
-            aria-describedby="igc-intensity-info"
-            onChange={(e) => update('horror', e.currentTarget.value as Preferences['horror'])}
-          >
-            <option value="quiet">{t('No jumpscares', 'Tanpa jumpscare')}</option>
-            <option value="balanced">{t('Balanced horror', 'Horor seimbang')}</option>
-            <option value="full">{t('Full horror', 'Horor penuh')}</option>
-          </select>
-        </label>
-        <p id="igc-intensity-info" className="igc-setting-help">
-          {
-            {
-              quiet: t(
-                'Defeat goes straight to the result, in silence.',
-                'Saat kalah, hasil langsung ditampilkan tanpa suara.'
-              ),
-              balanced: t(
-                'A brief shadow and a soft tone follow a defeat.',
-                'Bayangan singkat dan nada lembut muncul setelah kalah.'
-              ),
-              full: t(
-                'A looming silhouette and a stronger sound follow a defeat.',
-                'Siluet mendekat dan bunyi yang lebih kuat muncul setelah kalah.'
-              )
-            }[draft.horror]
-          }
-        </p>
-        <label className="igc-setting">
-          <span>{t('Reduce motion', 'Kurangi gerakan')}</span>
+        <fieldset className="igc-fear">
+          <legend>{t('Horror intensity', 'Intensitas horor')}</legend>
+          {fears.map(([level, en, idName, enNote, idNote]) => (
+            <label key={level} className="igc-fear-option" data-level={level}>
+              <input
+                type="radio"
+                name="horror"
+                value={level}
+                checked={draft.horror === level}
+                onChange={() => update('horror', level)}
+              />
+              <span className="igc-fear-flame" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              <strong>{t(en, idName)}</strong>
+              <small>{t(enNote, idNote)}</small>
+            </label>
+          ))}
+        </fieldset>
+        <label className="igc-setting igc-switch igc-listen">
+          <span>
+            {t('Play with sound', 'Main dengan suara')}
+            <small>
+              {t(
+                'Rain, footsteps, her laugh. Best with headphones.',
+                'Hujan, langkah kaki, tawanya. Paling terasa dengan headphone.'
+              )}
+            </small>
+          </span>
           <input
             type="checkbox"
-            checked={draft.reducedMotion}
-            onChange={(e) => update('reducedMotion', e.currentTarget.checked)}
-          />
-        </label>
-        <label className="igc-setting">
-          <span>{t('Enable sound', 'Aktifkan suara')}</span>
-          <input
-            type="checkbox"
+            role="switch"
             checked={draft.sound}
             onChange={(e) => update('sound', e.currentTarget.checked)}
           />
         </label>
-        {slider('level', t('Volume', 'Volume'))}
-        <details className="igc-mixer">
-          <summary>{t('Audio mix', 'Campuran audio')}</summary>
-          {slider('music', t('Music', 'Musik'))}
-          {slider('ambience', t('Ambience', 'Suasana'))}
-          {slider('effects', t('Sound effects', 'Efek suara'))}
-        </details>
-        <label className="igc-setting">
-          <span>{t('Language', 'Bahasa')}</span>
-          <select value={draft.lang} onChange={(e) => update('lang', e.currentTarget.value as Lang)}>
-            <option value="en">English</option>
-            <option value="id">Bahasa Indonesia</option>
-          </select>
-        </label>
+        {gate ? (
+          <details className="igc-more">
+            <summary>{t('More options', 'Opsi lain')}</summary>
+            {secondary}
+          </details>
+        ) : (
+          secondary
+        )}
         <button type="submit" className="igc-button igc-primary">
           {gate ? t('Enter the village', 'Masuk desa') : t('Save settings', 'Simpan pengaturan')}
         </button>

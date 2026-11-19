@@ -6,7 +6,7 @@ test.use({ launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-s
 async function enterGame(page: Page, trigger: Locator) {
   await trigger.click();
   await expect(page.locator('[data-screen=gate]')).toBeVisible();
-  await page.locator('.igc-form select').first().selectOption('quiet');
+  await page.locator('.igc-form input[name=horror][value=quiet]').check();
   await page.locator('.igc-form button[type=submit]').click();
   await expect(page.locator('[data-screen=intro]')).toBeVisible();
   await page.locator('.igc-actions .igc-primary').click();
