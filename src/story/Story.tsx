@@ -421,22 +421,17 @@ export default function Story({
               <p className="story-narration">{chapter.text[lang]}</p>
             </div>
             <div className="story-actions">
-              <span className="story-play-wrap">
-                <button
-                  type="button"
-                  className="story-play"
-                  data-open="play"
-                  data-finale={index === last ? '' : undefined}
-                  aria-describedby="story-play-hint"
-                  onClick={(e) => onPlay(e.currentTarget)}
-                >
-                  <StoryMark kind="play" />
-                  {playLabel}
-                </button>
-                <span className="story-play-hint" id="story-play-hint">
-                  {playHint}
-                </span>
-              </span>
+              <button
+                type="button"
+                className="story-play"
+                data-open="play"
+                data-finale={index === last ? '' : undefined}
+                aria-describedby="story-play-hint"
+                onClick={(e) => onPlay(e.currentTarget)}
+              >
+                <StoryMark kind="play" />
+                {playLabel}
+              </button>
               <button
                 type="button"
                 className="story-guide"
@@ -447,6 +442,9 @@ export default function Story({
                 {id ? 'Cara bermain' : 'How to play'}
               </button>
             </div>
+            <p className="story-play-hint" id="story-play-hint">
+              {playHint}
+            </p>
             {!sound && (
               <button
                 type="button"
@@ -511,8 +509,8 @@ export default function Story({
                     ? 'Bab berikutnya'
                     : 'Next chapter'
                   : id
-                    ? 'Gulir untuk menyusuri desa'
-                    : 'Scroll to explore the village'}
+                    ? <span>Gulir<span className="story-long"> untuk menyusuri desa</span></span>
+                    : <span>Scroll to explore<span className="story-long"> the village</span></span>}
             </button>
             <a
               className="story-skip"
@@ -523,7 +521,15 @@ export default function Story({
                 skip();
               }}
             >
-              {id ? 'Langsung ke mode latihan' : 'Skip to practice modes'}
+              {id ? (
+                <span>
+                  Langsung ke<span className="story-long"> mode</span> latihan
+                </span>
+              ) : (
+                <span>
+                  Skip to practice<span className="story-long"> modes</span>
+                </span>
+              )}
             </a>
           </div>
           <span className="story-progress" aria-hidden="true" />

@@ -274,12 +274,8 @@
   gap: clamp(18px, 2.3vw, 38px);
   margin-top: clamp(22px, 3.5vh, 40px);
 }
-.story-play-wrap {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 8px;
-}
 .story-play-hint {
+  margin: 12px 0 0;
   font: 500 0.7rem/1.4 var(--mono, Consolas, monospace);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -755,6 +751,12 @@
     width: 12px;
   }
 }
+/* Short labels keep the bottom bar on one line on phones. */
+@media (max-width: 440px) {
+  .story-long {
+    display: none;
+  }
+}
 @media (max-width: 365px) {
   .story-place svg {
     display: none;
@@ -810,6 +812,15 @@
   .story-play {
     min-height: 44px;
     font-size: 0.81rem;
+  }
+  /* Short landscape: the header carries the sound toggle; keep only the essentials here. */
+  .story-listen,
+  .story-play-hint {
+    display: none;
+  }
+  .story-actions .story-guide,
+  .story-play[data-finale] {
+    min-height: 44px;
   }
   .story-place > span {
     font-size: 17px;
