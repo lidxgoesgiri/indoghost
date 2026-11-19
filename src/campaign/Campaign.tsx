@@ -606,7 +606,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
         ],
         [
           t('Typography', 'Tipografi'),
-          'Cormorant Garamond · Cormorant Project Authors · SIL Open Font License 1.1'
+          'Cormorant Garamond · Cormorant Project Authors · Plus Jakarta Sans · Tokotype · SIL Open Font License 1.1'
         ],
         [
           t('Sound', 'Suara'),

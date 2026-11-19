@@ -12,9 +12,19 @@
   font-style: italic;
   font-display: swap;
 }
+/* Plus Jakarta Sans by Tokotype, an Indonesian foundry. Variable 400–700, Latin subset. */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/assets/plus-jakarta-sans.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 :root {
   color-scheme: dark;
   --header-h: 71px;
+  --font-body: var(--sans);
   --night: #101310;
   --bone: #f2eee2;
   --muted: #c3c4b8;
@@ -22,7 +32,7 @@
   --copper: #be765a;
   --line: #3c4337;
   --display: 'Cormorant Garamond', Georgia, serif;
-  --sans: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Roboto, system-ui, sans-serif;
+  --sans: 'Plus Jakarta Sans', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Roboto, system-ui, sans-serif;
   --mono: 'Cascadia Mono', Consolas, 'SF Mono', Menlo, 'Roboto Mono', ui-monospace, monospace;
   /* One kicker mark everywhere: a copper rule ending in a lantern diamond. */
   --kicker-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='7'%3E%3Cpath d='M0 3.5h31' stroke='%23e4a081'/%3E%3Cpath d='M32.5 1 35 3.5 32.5 6 30 3.5Z' fill='%23e4a081'/%3E%3C/svg%3E") left center / 36px 7px no-repeat;
@@ -30,6 +40,13 @@
   background: var(--night);
   color: var(--bone);
   font-family: var(--sans);
+  /* Plus Jakarta Sans sets words close together; open them slightly for UI text. */
+  word-spacing: 0.06em;
+}
+:where(.story-wordmark, .story-chapter-title, .story-tagline, .story-place > span, .brand-mark, .encounter-heading h2,
+    .encounter-title, .bestiary-heading h2, .creature h3, .creature-play p, .field-guide h2, .guide-entry h3,
+    .igc-heading, .igc-brand, .igc-list-copy strong, .igc-entries h3, .igc-note, .igc-stat strong, .igc-fear-option strong) {
+  word-spacing: normal;
 }
 * {
   box-sizing: border-box;
@@ -49,6 +66,7 @@ button,
 input,
 select {
   font: inherit;
+  word-spacing: inherit;
 }
 button,
 a {
@@ -717,15 +735,6 @@ html:has(dialog[open]) {
     linear-gradient(180deg, #0a0f0c, #101410 42%);
   padding-block: clamp(64px, 8vw, 128px) clamp(42px, 5vw, 86px);
   scroll-margin-top: 1rem;
-}
-/* The story's last frame sinks into this section instead of ending on a hard edge. */
-.bestiary::before {
-  content: '';
-  position: absolute;
-  inset: calc(-1 * clamp(60px, 9vw, 140px)) 0 auto;
-  height: clamp(60px, 9vw, 140px);
-  background: linear-gradient(180deg, transparent, #0a0f0c);
-  pointer-events: none;
 }
 .bestiary:focus {
   outline: none;

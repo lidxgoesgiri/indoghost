@@ -11,7 +11,7 @@
   width: min(100%, 920px);
   margin-inline: auto;
   text-align: left;
-  font-family: system-ui, sans-serif;
+  font-family: var(--sans, system-ui, sans-serif);
 }
 .sweep-game *, .sweep-game *::before, .sweep-game *::after { box-sizing: border-box; }
 .sweep-table, .sweep-controls { min-width: 0; }

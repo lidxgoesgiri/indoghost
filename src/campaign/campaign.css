@@ -33,7 +33,7 @@ html:has(.igc-dialog[open]) { overflow: hidden; }
 .igc-dialog::backdrop { background: rgb(4 8 7 / 85%); backdrop-filter: blur(5px); }
 .igc-dialog:not([open]), .igc-dialog [hidden] { display: none !important; }
 .igc-dialog *, .igc-dialog *::before, .igc-dialog *::after { box-sizing: border-box; }
-.igc-dialog button, .igc-dialog select, .igc-dialog input { font: inherit; }
+.igc-dialog button, .igc-dialog select, .igc-dialog input { font: inherit; word-spacing: inherit; }
 .igc-dialog :is(button, input, select, [tabindex]):focus-visible { outline: 2px solid var(--igc-amber); outline-offset: 3px; }
 .igc-dialog .igc-heading:focus { outline: none; }
 .igc-frame { isolation: isolate; }

@@ -768,8 +768,7 @@
     gap: 7px;
   }
   .story-skip {
-    max-width: 10ch;
-    text-align: right;
+    white-space: nowrap;
   }
 }
 @media (max-height: 540px) and (min-width: 540px) {
