@@ -39,7 +39,7 @@ export const chapters: readonly Chapter[] = [
   {
     image: 'lantern-floor.webp',
     frame: [0.65, 0.5],
-    lantern: [0.78, 0.6],
+    lantern: [0.866, 0.6],
     location: { id: 'Serambi tegel', en: 'The tiled veranda' },
     title: { id: 'Jejak di', en: 'Beneath the' },
     italic: { id: 'bawah tegel.', en: 'tiles.' },

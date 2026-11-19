@@ -20,12 +20,14 @@ const vertex = `
   }
 `;
 
-// The lantern opens a ragged aperture onto the next location. Both plates
-// stay in the same camera space, including when the player scrolls backwards.
+// One pass paints every location. Each plate carries its own weather and its
+// own unease (warp + mood), and each of the three cuts opens differently:
+// the lantern aperture, the dark rising off the tiles, the parting door.
+// Both plates stay in the same camera space, so scrolling backwards rewinds.
 const fragment = `
   uniform sampler2D plateA, plateB;
   uniform vec2 cropA, cropB, anchorA, anchorB, lanternA, lanternB, pointer;
-  uniform float blend, clockTime, aspect;
+  uniform float blend, clockTime, aspect, sceneA, sceneB, cut, vanish;
   varying vec2 vUv;
   float hash(vec2 v) { return fract(sin(dot(v, vec2(127.1,311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -33,22 +35,153 @@ const fragment = `
     return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),
                mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);
   }
+  float fbm(vec2 p) { return noise(p)*.57+noise(p*2.03+7.1)*.29+noise(p*4.1+3.7)*.14; }
+  float blob(vec2 d) { return exp(-dot(d,d)); }
+  float speck(vec2 p) {
+    vec3 v=fract(vec3(p.xyx)*.1031); v+=dot(v,v.yzx+33.33);
+    return fract((v.x+v.y)*v.z);
+  }
+
+  // Small image-space drift: things that should never hold perfectly still.
+  vec2 warp(float s, vec2 uv, float t) {
+    if (s < .5) {
+      float hang=smoothstep(.5,.95,uv.y);
+      return vec2(.0028*sin(t*.7+uv.y*13.+uv.x*5.)+.0013*sin(t*1.3+uv.x*31.),0.)*hang;
+    }
+    if (s < 1.5) {
+      float body=blob((uv-vec2(.704,.46))*vec2(22.,8.));
+      float twitch=smoothstep(.9,1.,sin(t*.83))*sin(t*37.);
+      float heat=blob((uv-vec2(.823,.78))*vec2(14.,7.));
+      return vec2(.005*twitch*body+.0018*sin(t*5.+uv.y*60.)*heat,0.);
+    }
+    if (s < 2.5) {
+      float flame=blob((uv-vec2(.866,.6))*vec2(26.,9.));
+      return vec2(.003*sin(t*6.3+uv.y*40.),.002*sin(t*4.1))*flame;
+    }
+    float figure=blob((uv-vec2(.724,.49))*vec2(20.,5.2));
+    float curtain=blob((uv-vec2(.452,.57))*vec2(22.,6.));
+    return vec2(.0045*sin(t*.8+uv.y*8.)*figure+.004*sin(t*.55+uv.y*11.)*curtain,.0025*sin(t*.47)*figure);
+  }
+
+  vec3 plate(sampler2D image, float s, vec2 uv, float t) {
+    vec2 p=uv+warp(s,uv,t);
+    vec3 c=texture2D(image,p).rgb;
+    if (s > 2.5 && vanish > .004) {
+      // She is only there while nobody looks straight at her.
+      float figure=min(1.,1.9*blob((uv-vec2(.724,.49))*vec2(17.,4.4)));
+      vec3 mist=texture2D(image,p+vec2(.058,.01),4.6).rgb;
+      mist=mix(mist,vec3(.27,.28,.37)*(.55+dot(mist,vec3(.6))),.3);
+      c=mix(c,mist,figure*vanish);
+    }
+    return c;
+  }
+
+  float rain(vec2 uv, float t, float scale, float speed) {
+    vec2 g=vec2((uv.x+uv.y*.09)*aspect*scale,uv.y*5.2+t*speed);
+    float column=floor(g.x), offset=hash(vec2(column,7.));
+    float y=g.y*(.8+.4*offset)+offset*31.;
+    float drop=step(.84,hash(vec2(column,floor(y))));
+    float fy=fract(y), fx=abs(fract(g.x)-.25-.5*offset)*2.;
+    return drop*smoothstep(.3,0.,fx)*smoothstep(0.,.5,fy)*smoothstep(1.,.8,fy);
+  }
+
+  // Light, weather and dread for one location. 'lamp' is the painted lantern,
+  // 'torch' the one the visitor carries with the pointer.
+  vec3 mood(float s, vec2 uv, vec3 c, float t, float lamp, float torch) {
+    float lum=dot(c,vec3(.3,.59,.11));
+    if (s < .5) {
+      // Gate: rain on the banyan, and a lantern that almost goes out.
+      float gutter=smoothstep(.955,1.,sin(t*.46));
+      float flame=(.9+.07*sin(t*1.9)+.03*sin(t*3.1))*(1.-.86*gutter);
+      c*=1.-.24*gutter;
+      c+=vec3(.25,.115,.03)*lamp*flame;
+      float pool=blob((uv-vec2(.66,.12))*vec2(4.2,7.));
+      c+=vec3(.36,.15,.035)*pool*lum*flame*(.55+.45*noise(vec2(uv.x*46.,t*1.7)));
+      float moon=blob((uv-vec2(.317,.866))*vec2(4.6,2.2));
+      c+=vec3(.045,.085,.095)*moon*(.45+.55*sin(t*.23))*(1.+.8*gutter);
+      float wet=rain(vUv,t,93.,5.6)*.05+rain(vUv+.31,t,51.,4.3)*.04;
+      c+=vec3(.52,.66,.68)*wet*(.4+lum);
+      c+=vec3(.036,.025,.011)*torch;
+    } else if (s < 1.5) {
+      // Coin alley: red mist with a pulse of its own.
+      float beat=pow(.5+.5*sin(t*5.2),10.)+.55*pow(.5+.5*sin(t*5.2-.9),10.);
+      float mist=fbm(vec2(uv.x*5.-t*.05,uv.y*3.+t*.022));
+      float band=smoothstep(.04,.38,uv.y)*smoothstep(.9,.42,uv.y)*smoothstep(.3,.72,uv.x);
+      c+=vec3(.36,.036,.02)*mist*band*(.5+.34*beat);
+      c*=vec3(1.+.05*beat,1.-.035*beat,1.-.035*beat);
+      float flick=.76+.18*noise(vec2(t*5.3,3.))+.06*sin(t*13.);
+      c+=vec3(.32,.06,.025)*lamp*flick;
+      c+=vec3(.04,.016,.008)*torch;
+    } else if (s < 2.5) {
+      // Veranda: the floor only reads where the hand lantern falls.
+      float flame=.9+.07*sin(t*2.3)+.05*noise(vec2(t*4.,9.));
+      c*=.37+1.2*torch*flame;
+      c+=vec3(.36,.18,.05)*torch*flame*lum*1.3;
+      c+=vec3(.2,.1,.03)*lamp*flame;
+    } else {
+      // Pavilion: cold moon, a pale presence that breathes.
+      float aura=blob((uv-vec2(.724,.5))*vec2(11.,3.4))*(1.-vanish);
+      float breath=.5+.5*sin(t*.62);
+      c=mix(c,vec3(lum)*vec3(.86,.92,1.08),.2+.14*vanish);
+      c*=1.-.16*vanish;
+      c+=vec3(.075,.09,.135)*aura*(.3+.7*breath);
+      c+=vec3(.05,.05,.09)*lamp*(.8+.2*sin(t*.9));
+      c+=vec3(.02,.022,.03)*torch;
+    }
+    return c;
+  }
+
   void main() {
-    vec2 uvA=(vUv-anchorA)*cropA+anchorA, uvB=(vUv-anchorB)*cropB+anchorB;
-    vec3 a=texture2D(plateA,uvA).rgb, b=texture2D(plateB,uvB).rgb;
-    float field=length((vUv-vec2(.69,.46))*vec2(min(aspect,1.85),.85));
-    float grain=noise(vUv*7.)*.09+noise(vUv*21.)*.026;
-    float front=mix(-.23,2.18,blend);
-    float iris=1.-smoothstep(front-.085,front+.085,field+grain);
-    float warmEdge=(1.-smoothstep(.0,.095,abs(field+grain-front)))*sin(blend*3.14159);
-    vec3 scene=mix(a,b,iris);
-    float flutter=.91+.065*sin(clockTime*1.9)+.025*sin(clockTime*3.1);
-    float lampA=exp(-length((uvA-lanternA)*vec2(1.8,1.))*15.);
-    float lampB=exp(-length((uvB-lanternB)*vec2(1.8,1.))*15.);
-    float lamp=mix(lampA,lampB,iris)*flutter;
-    float pointerLight=exp(-length((vUv-pointer)*vec2(min(aspect,1.8),1.))*6.);
-    scene+=vec3(.22,.105,.027)*lamp+vec3(.036,.025,.011)*pointerLight+vec3(.10,.040,.012)*warmEdge;
-    gl_FragColor=vec4(scene,1.);
+    float t=clockTime;
+    float wave=sin(blend*3.14159);
+    float ragged=noise(vUv*7.)*.09+noise(vUv*21.)*.026;
+    float iris;
+    vec3 seam=vec3(0.);
+    vec2 origin=vUv;
+    float jamb=1.;
+    if (cut < .5) {
+      // The lantern opens a ragged aperture onto the alley.
+      float field=length((vUv-vec2(.69,.46))*vec2(min(aspect,1.85),.85))+ragged;
+      float front=mix(-.23,2.18,blend);
+      iris=1.-smoothstep(front-.085,front+.085,field);
+      seam=vec3(.17,.05,.014)*(1.-smoothstep(0.,.11,abs(field-front)))*wave;
+    } else if (cut < 1.5) {
+      // The mist sinks and the dark climbs off the tiles.
+      float field=vUv.y*.78+fbm(vUv*vec2(3.*aspect,3.2)+vec2(0.,t*.03))*.56;
+      float front=mix(-.1,1.44,blend);
+      iris=1.-smoothstep(front-.075,front+.075,field);
+      seam=vec3(.045,.1,.08)*(1.-smoothstep(0.,.13,abs(field-front)))*wave;
+    } else {
+      // Two door leaves slide apart on the pavilion.
+      float hinge=.69;
+      float gap=blend*1.08*hinge-.012;
+      float side=abs(vUv.x-hinge);
+      iris=1.-smoothstep(gap-.003,gap+.003,side);
+      origin.x-=sign(vUv.x-hinge)*max(gap,0.);
+      float leaf=max(side-gap,0.), sill=max(gap-side,0.);
+      seam=vec3(.2,.22,.3)*exp(-leaf*42.)*(1.-iris)*wave;
+      jamb=mix(1.,smoothstep(0.,.11,sill),.62*wave);
+    }
+    // The outgoing plate leans in as it leaves; the incoming one settles back.
+    vec2 uvA=(origin-anchorA)*cropA*(1.-.045*blend)+anchorA;
+    vec2 uvB=(vUv-anchorB)*cropB*(.95+.05*blend)+anchorB;
+    vec2 aim=pointer+vec2(.035*sin(t*.31),.028*sin(t*.47));
+    float torch=exp(-length((vUv-aim)*vec2(min(aspect,1.8),1.))*4.6);
+    vec3 scene=vec3(0.);
+    if (iris < .999) {
+      float lamp=exp(-length((uvA-lanternA)*vec2(1.8,1.))*15.);
+      scene+=mood(sceneA,uvA,plate(plateA,sceneA,uvA,t),t,lamp,torch)*(1.-iris);
+    }
+    if (iris > .001) {
+      float lamp=exp(-length((uvB-lanternB)*vec2(1.8,1.))*15.);
+      scene+=mood(sceneB,uvB,plate(plateB,sceneB,uvB,t),t,lamp,torch)*iris*jamb;
+    }
+    scene+=seam;
+    // Lens: the frame closes in during a cut, then film grain.
+    vec2 q=(vUv-.5)*vec2(1.05,1.25);
+    scene*=mix(.6,1.,smoothstep(.92,.26,length(q)))-.1*wave;
+    scene+=(speck(gl_FragCoord.xy+mod(floor(t*14.),64.)*vec2(37.,17.))-.5)*.03;
+    gl_FragColor=vec4(max(scene,0.),1.);
     #include <colorspace_fragment>
   }
 `;
@@ -82,14 +215,24 @@ const moteVertex = `
   }
 `;
 const moteFragment = `
+  uniform vec3 rim, core;
   varying float pulse;
   void main() {
     float r=length(gl_PointCoord-.5)*2.;
     if(r>=1.) discard;
-    gl_FragColor=vec4(mix(vec3(.75,.35,.11),vec3(1.,.86,.57),1.-r),pulse*(1.-r*r));
+    gl_FragColor=vec4(mix(rim,core,1.-r),pulse*(1.-r*r));
     #include <colorspace_fragment>
   }
 `;
+
+// Where the kuntilanak stands on her plate, and what drifts in each location's air.
+const ghost = { plate: 3, x: 0.724, y: 0.49 };
+const palette = [
+  ['#bf591c', '#ffdb91'],
+  ['#b3200f', '#ff8a5c'],
+  ['#8f6a2c', '#f2deb0'],
+  ['#5b6e96', '#dfe9ff'],
+].map(([rim, core]) => [new THREE.Color(rim), new THREE.Color(core)] as const);
 
 function VillageSet({ frame, onReady, onFailure }: Props) {
   const { gl, size, camera, advance } = useThree();
@@ -119,12 +262,22 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
       clockTime: { value: 0 },
       aspect: { value: 1 },
       pointer: { value: new THREE.Vector2(0.7, 0.5) },
+      sceneA: { value: 0 },
+      sceneB: { value: 1 },
+      cut: { value: 0 },
+      vanish: { value: 0 },
     }),
     [plates],
   );
   const haze = useMemo(() => ({ clockTime: { value: 0 } }), []);
   const dust = useMemo(
-    () => ({ clockTime: { value: 0 }, pixelRatio: { value: 1 }, cursor: { value: new THREE.Vector2() } }),
+    () => ({
+      clockTime: { value: 0 },
+      pixelRatio: { value: 1 },
+      cursor: { value: new THREE.Vector2() },
+      rim: { value: new THREE.Color() },
+      core: { value: new THREE.Color() },
+    }),
     [],
   );
   const [positions, seeds] = useMemo(() => {
@@ -145,6 +298,8 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
     return [xyz, values];
   }, [size.width < 680]);
   const elapsed = useRef(0);
+  const painted = useRef(0);
+  const absence = useRef(0);
   const ready = useRef(false);
 
   useEffect(() => {
@@ -222,6 +377,26 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
     crop('B', b);
     paint.aspect.value = aspect;
     paint.blend.value = THREE.MathUtils.smoothstep(local, 0.18, 0.8);
+    paint.sceneA.value = paint.cut.value = a;
+    paint.sceneB.value = b;
+    // The figure in the pavilion thins out when the pointer lantern finds her,
+    // and now and then on her own. She returns more slowly than she leaves.
+    const dt = Math.min(0.1, Math.max(0, elapsed.current - painted.current));
+    painted.current = elapsed.current;
+    let gone = THREE.MathUtils.smoothstep(Math.sin(elapsed.current * 0.37), 0.93, 1);
+    if (position > 2.4) {
+      const shown = plates[ghost.plate];
+      const span = Math.min(1, aspect / (shown.image.width / shown.image.height));
+      const anchor = chapters[ghost.plate].frame[0];
+      const x = (ghost.x - anchor) / span + anchor - (motion.pointerX + 1) * 0.5;
+      const y = ghost.y - (motion.pointerY + 1) * 0.5;
+      gone = Math.max(gone, 1 - THREE.MathUtils.smoothstep(Math.hypot(x * Math.min(aspect, 1.8), y), 0.1, 0.24));
+    }
+    absence.current += (gone - absence.current) * (1 - Math.exp(-dt * (gone > absence.current ? 2.6 : 0.7)));
+    paint.vanish.value = absence.current;
+    const air = Math.min(palette.length - 2, Math.floor(position));
+    particles.rim.value.lerpColors(palette[air][0], palette[air + 1][0], position - air);
+    particles.core.value.lerpColors(palette[air][1], palette[air + 1][1], position - air);
     paint.clockTime.value = mist.clockTime.value = particles.clockTime.value = elapsed.current;
     paint.pointer.value.set((motion.pointerX + 1) * 0.5, (motion.pointerY + 1) * 0.5);
     particles.cursor.value.set(
