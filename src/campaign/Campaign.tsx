@@ -23,6 +23,7 @@ interface Status {
   lang: Lang;
   sound: boolean;
   reducedMotion: boolean;
+  horror: Preferences['horror'];
 }
 interface Campaign {
   status: Status;
@@ -30,6 +31,9 @@ interface Campaign {
   open: (route: Route, trigger?: HTMLElement | null) => void;
   setSound: (sound: boolean) => void;
   setLanguage: (lang: Lang) => void;
+  /** Landing story ambience: the chapter on screen, or null. */
+  scene: (chapter: number | null) => void;
+  sting: (chapter: number) => void;
 }
 const Context = createContext<Campaign | null>(null);
 export function useCampaign() {
@@ -104,7 +108,8 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     completedAll: records.length === 7,
     lang,
     sound: prefs.sound,
-    reducedMotion: prefs.reducedMotion
+    reducedMotion: prefs.reducedMotion,
+    horror: prefs.horror
   };
   const setView = useCallback((patch: Partial<View>) => {
     current.current = { ...current.current, ...patch };
@@ -267,8 +272,14 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
       sound.stop();
     };
     const visibility = () => {
+      sound.hush(document.hidden);
       if (document.hidden) blur();
     };
+    // Browsers only start audio after a gesture. A returning player who left
+    // sound on gets the village ambience from their first click or key.
+    const wake = () => sound.unlock();
+    window.addEventListener('pointerdown', wake, { once: true });
+    window.addEventListener('keydown', wake, { once: true });
     const sync = (event: StorageEvent) => {
       if (!event.key || event.key === prefsKey || event.key.startsWith(nightKey(1).slice(0, -1)))
         store.refresh();
@@ -280,6 +291,8 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('blur', blur);
       document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('storage', sync);
+      window.removeEventListener('pointerdown', wake);
+      window.removeEventListener('keydown', wake);
       stop();
       sound.dispose();
     };
@@ -328,6 +341,8 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   const map = to('map'),
     journal = to('journal');
   const modalOpen = screen !== 'closed';
+  const scene = useCallback((chapter: number | null) => sound.scene(chapter), [sound]);
+  const sting = useCallback((chapter: number) => sound.sting(chapter), [sound]);
   let panel: ReactNode = null;
   switch (screen) {
     case 'gate':
@@ -629,7 +644,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   }
   const isBack = screen === 'pause' || screen === 'confirm' || screen === 'pause-settings';
   return (
-    <Context.Provider value={{ status, modalOpen, open, setLanguage, setSound }}>
+    <Context.Provider value={{ status, modalOpen, open, setLanguage, setSound, scene, sting }}>
       {children}
       <dialog
         ref={dialog}

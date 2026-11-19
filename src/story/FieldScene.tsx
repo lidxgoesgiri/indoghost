@@ -24,10 +24,13 @@ const vertex = `
 // own unease (warp + mood), and each of the three cuts opens differently:
 // the lantern aperture, the dark rising off the tiles, the parting door.
 // Both plates stay in the same camera space, so scrolling backwards rewinds.
+// Each location also previews its game: the lantern drives the tuyul off,
+// wet footprints come closer across the tiles, and the kuntilanak moves
+// whenever she is looked at. A 'beat' is one such scare, scaled by 'dread'.
 const fragment = `
   uniform sampler2D plateA, plateB;
-  uniform vec2 cropA, cropB, anchorA, anchorB, lanternA, lanternB, pointer;
-  uniform float blend, clockTime, aspect, sceneA, sceneB, cut, vanish;
+  uniform vec2 cropA, cropB, anchorA, anchorB, lanternA, lanternB, pointer, echoAt;
+  uniform float blend, clockTime, aspect, sceneA, sceneB, cut, vanish, repel, beatScene, beatTime, dread;
   varying vec2 vUv;
   float hash(vec2 v) { return fract(sin(dot(v, vec2(127.1,311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -41,6 +44,8 @@ const fragment = `
     vec3 v=fract(vec3(p.xyx)*.1031); v+=dot(v,v.yzx+33.33);
     return fract((v.x+v.y)*v.z);
   }
+  // Seconds into this location's scare beat, or -1 while nothing is happening.
+  float beatAt(float s) { return (beatTime >= 0. && abs(s-beatScene) < .5) ? beatTime : -1.; }
 
   // Small image-space drift: things that should never hold perfectly still.
   vec2 warp(float s, vec2 uv, float t) {
@@ -52,7 +57,10 @@ const fragment = `
       float body=blob((uv-vec2(.704,.46))*vec2(22.,8.));
       float twitch=smoothstep(.9,1.,sin(t*.83))*sin(t*37.);
       float heat=blob((uv-vec2(.823,.78))*vec2(14.,7.));
-      return vec2(.005*twitch*body+.0018*sin(t*5.+uv.y*60.)*heat,0.);
+      // The lantern pushes the tuyul away; during a beat it bolts for the dark.
+      float tb=beatAt(s), bolt=0.;
+      if (tb >= 0.) bolt=smoothstep(0.,.16,tb)*exp(-tb*1.3)*(1.+.35*sin(tb*48.));
+      return vec2(.005*twitch*body-body*(.017*repel+.034*bolt*dread)+.0018*sin(t*5.+uv.y*60.)*heat,0.);
     }
     if (s < 2.5) {
       float flame=blob((uv-vec2(.866,.6))*vec2(26.,9.));
@@ -73,6 +81,17 @@ const fragment = `
       mist=mix(mist,vec3(.27,.28,.37)*(.55+dot(mist,vec3(.6))),.3);
       c=mix(c,mist,figure*vanish);
     }
+    float tb=beatAt(s);
+    if (s > 2.5 && tb >= 0.) {
+      // ...and when she is gone from the railing, she is standing closer.
+      float env=smoothstep(0.,.8,tb)*(1.-smoothstep(2.1,3.,tb));
+      vec2 near=echoAt;
+      vec2 source=vec2(.724,.49)+(uv-near)/1.32;
+      float shape=blob((uv-near)*vec2(20.,5.2)/1.32);
+      vec3 her=texture2D(image,source).rgb;
+      float pale=clamp((dot(her,vec3(.3,.59,.11))-dot(c,vec3(.3,.59,.11)))*5.,0.,1.);
+      c=mix(c,her*vec3(.9,.96,1.14),pale*shape*env*dread);
+    }
     return c;
   }
 
@@ -91,7 +110,9 @@ const fragment = `
     float lum=dot(c,vec3(.3,.59,.11));
     if (s < .5) {
       // Gate: rain on the banyan, and a lantern that almost goes out.
-      float gutter=smoothstep(.955,1.,sin(t*.46));
+      float tb=beatAt(s), gutter=smoothstep(.955,1.,sin(t*.46))*.32;
+      if (tb >= 0.)
+        gutter=max(gutter,smoothstep(0.,.18,tb)*(1.-smoothstep(1.7,2.7,tb))*(.8+.2*noise(vec2(t*22.,1.)))*dread);
       float flame=(.9+.07*sin(t*1.9)+.03*sin(t*3.1))*(1.-.86*gutter);
       c*=1.-.24*gutter;
       c+=vec3(.25,.115,.03)*lamp*flame;
@@ -107,7 +128,8 @@ const fragment = `
       float beat=pow(.5+.5*sin(t*5.2),10.)+.55*pow(.5+.5*sin(t*5.2-.9),10.);
       float mist=fbm(vec2(uv.x*5.-t*.05,uv.y*3.+t*.022));
       float band=smoothstep(.04,.38,uv.y)*smoothstep(.9,.42,uv.y)*smoothstep(.3,.72,uv.x);
-      c+=vec3(.36,.036,.02)*mist*band*(.5+.34*beat);
+      float tb=beatAt(s), surge=tb >= 0. ? smoothstep(0.,.12,tb)*exp(-tb*.9)*dread : 0.;
+      c+=vec3(.36,.036,.02)*mist*band*(.5+.34*beat+1.1*surge);
       c*=vec3(1.+.05*beat,1.-.035*beat,1.-.035*beat);
       float flick=.76+.18*noise(vec2(t*5.3,3.))+.06*sin(t*13.);
       c+=vec3(.32,.06,.025)*lamp*flick;
@@ -118,6 +140,30 @@ const fragment = `
       c*=.37+1.2*torch*flame;
       c+=vec3(.36,.18,.05)*torch*flame*lum*1.3;
       c+=vec3(.2,.1,.03)*lamp*flame;
+      // Fresh wet footprints, one step at a time, walking towards the viewer.
+      float tb=beatAt(s);
+      if (tb >= 0.) {
+        vec2 dir=normalize(vec2(-.3,-.66));
+        vec2 across=vec2(-dir.y,dir.x);
+        for (int i=0; i<6; i++) {
+          float n=float(i), age=tb-n*.43;
+          if (age < 0.) break;
+          float k=n/5., side=mod(n,2.)*2.-1., size=mix(.95,1.7,k);
+          vec2 d=(uv-mix(vec2(.665,.8),vec2(.565,.14),k))*vec2(3.,1.)-across*side*(.017+.013*k);
+          vec2 f=vec2(dot(d,across)*side,dot(d,dir))/size;
+          // Sole narrows from the ball to the heel; five toes fan out in front.
+          float sole=1.-smoothstep(.6,1.,length(vec2(f.x/(.0135-.0045*smoothstep(.015,-.028,f.y)),f.y/.026)));
+          float toes=0.;
+          for (int j=0; j<5; j++) {
+            float m=float(j);
+            vec2 at=vec2((m-1.6)*.0052,.033-.0016*m*m*.5);
+            toes=max(toes,1.-smoothstep(.5,1.,length(f-at)/(.0042-.0004*m)));
+          }
+          float mark=max(sole,toes)*smoothstep(0.,.08,age)*exp(-max(0.,age-1.6)*.7)*dread;
+          float core=smoothstep(.4,.8,mark), rim=smoothstep(.22,.42,mark)-core;
+          c=c*(1.-.78*core)+vec3(.11,.19,.17)*rim+vec3(.02,.035,.032)*core;
+        }
+      }
     } else {
       // Pavilion: cold moon, a pale presence that breathes.
       float aura=blob((uv-vec2(.724,.5))*vec2(11.,3.4))*(1.-vanish);
@@ -225,8 +271,27 @@ const moteFragment = `
   }
 `;
 
-// Where the kuntilanak stands on her plate, and what drifts in each location's air.
+// Where the tuyul and the kuntilanak stand on their plates, and what drifts in each location's air.
+const tuyul = { plate: 1, x: 0.704, y: 0.46 };
 const ghost = { plate: 3, x: 0.724, y: 0.49 };
+// A scare beat waits for the visitor to linger, then repeats while they stay.
+const dread = { quiet: { level: 0.5, every: 17 }, balanced: { level: 0.8, every: 12 }, full: { level: 1, every: 8.5 } };
+const beatLength = 3.3,
+  lingerFirst = 3.4;
+
+/** Blend landscape framing into the portrait one as the stage turns tall. */
+function framing(index: number, aspect: number, ratio: number) {
+  const chapter = chapters[index];
+  const tall = THREE.MathUtils.clamp((1.1 - aspect) / 0.3, 0, 1);
+  const zoom = THREE.MathUtils.lerp(1, chapter.portrait[2], tall);
+  return {
+    crop: [Math.min(1, aspect / ratio) / zoom, Math.min(1, ratio / aspect) / zoom] as const,
+    anchor: [
+      THREE.MathUtils.lerp(chapter.frame[0], chapter.portrait[0], tall),
+      THREE.MathUtils.lerp(chapter.frame[1], chapter.portrait[1], tall),
+    ] as const,
+  };
+}
 const palette = [
   ['#bf591c', '#ffdb91'],
   ['#b3200f', '#ff8a5c'],
@@ -266,6 +331,11 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
       sceneB: { value: 1 },
       cut: { value: 0 },
       vanish: { value: 0 },
+      repel: { value: 0 },
+      beatScene: { value: -1 },
+      beatTime: { value: -1 },
+      dread: { value: 0.8 },
+      echoAt: { value: new THREE.Vector2(0.6, 0.465) },
     }),
     [plates],
   );
@@ -300,6 +370,9 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
   const elapsed = useRef(0);
   const painted = useRef(0);
   const absence = useRef(0);
+  const flee = useRef(0);
+  const resting = useRef(0);
+  const beat = useRef({ scene: -1, start: -1, settled: 0, last: -99, lastScene: -1 });
   const ready = useRef(false);
 
   useEffect(() => {
@@ -364,14 +437,21 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
       leaves.current.opacity = 0.83 * (1 - THREE.MathUtils.smoothstep(position, 1.22, 1.79));
       canopy.current.visible = leaves.current.opacity > 0.005;
     }
+    const ratioOf = (index: number) => plates[index].image.width / plates[index].image.height;
     const crop = (key: 'A' | 'B', index: number) => {
-      const texture = plates[index],
+      const view = framing(index, aspect, ratioOf(index)),
         chapter = chapters[index];
-      const ratio = texture.image.width / texture.image.height;
-      paint[`plate${key}`].value = texture;
-      paint[`crop${key}`].value.set(Math.min(1, aspect / ratio), Math.min(1, ratio / aspect));
-      paint[`anchor${key}`].value.set(chapter.frame[0], chapter.frame[1]);
+      paint[`plate${key}`].value = plates[index];
+      paint[`crop${key}`].value.set(view.crop[0], view.crop[1]);
+      paint[`anchor${key}`].value.set(view.anchor[0], view.anchor[1]);
       paint[`lantern${key}`].value.set(chapter.lantern[0], chapter.lantern[1]);
+    };
+    // Distance on screen between the carried lantern and a spot on a plate.
+    const reach = (spot: { plate: number; x: number; y: number }) => {
+      const view = framing(spot.plate, aspect, ratioOf(spot.plate));
+      const x = (spot.x - view.anchor[0]) / view.crop[0] + view.anchor[0] - (motion.pointerX + 1) * 0.5;
+      const y = (spot.y - view.anchor[1]) / view.crop[1] + view.anchor[1] - (motion.pointerY + 1) * 0.5;
+      return { x, distance: Math.hypot(x * Math.min(aspect, 1.8), y) };
     };
     crop('A', a);
     crop('B', b);
@@ -379,21 +459,59 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
     paint.blend.value = THREE.MathUtils.smoothstep(local, 0.18, 0.8);
     paint.sceneA.value = paint.cut.value = a;
     paint.sceneB.value = b;
-    // The figure in the pavilion thins out when the pointer lantern finds her,
-    // and now and then on her own. She returns more slowly than she leaves.
-    const dt = Math.min(0.1, Math.max(0, elapsed.current - painted.current));
-    painted.current = elapsed.current;
-    let gone = THREE.MathUtils.smoothstep(Math.sin(elapsed.current * 0.37), 0.93, 1);
-    if (position > 2.4) {
-      const shown = plates[ghost.plate];
-      const span = Math.min(1, aspect / (shown.image.width / shown.image.height));
-      const anchor = chapters[ghost.plate].frame[0];
-      const x = (ghost.x - anchor) / span + anchor - (motion.pointerX + 1) * 0.5;
-      const y = ghost.y - (motion.pointerY + 1) * 0.5;
-      gone = Math.max(gone, 1 - THREE.MathUtils.smoothstep(Math.hypot(x * Math.min(aspect, 1.8), y), 0.1, 0.24));
+    const now = elapsed.current;
+    const dt = Math.min(0.1, Math.max(0, now - painted.current));
+    painted.current = now;
+    // Scare beats: linger on a location and something happens there.
+    const mood = dread[motion.dread] ?? dread.balanced;
+    // Lingering means the scroll has stopped somewhere outside a cut, not on an exact frame.
+    const scene = Math.round(position),
+      still = Math.abs(position - scene) < 0.2 && Math.abs(position - resting.current) < 0.0006;
+    resting.current = position;
+    const cue = beat.current;
+    if (!still || (cue.scene >= 0 && cue.scene !== scene)) {
+      cue.scene = -1;
+      cue.settled = now;
+    } else if (
+      cue.scene < 0 &&
+      now - cue.settled > lingerFirst &&
+      (scene !== cue.lastScene || now - cue.last > mood.every)
+    ) {
+      // A new location always gets its first beat; repeats wait for the interval.
+      cue.scene = cue.lastScene = scene;
+      cue.start = cue.last = now;
+      motion.onBeat?.(scene);
     }
+    if (cue.scene >= 0 && now - cue.start > beatLength) cue.scene = -1;
+    const beatTime = cue.scene >= 0 ? now - cue.start : -1;
+    paint.beatScene.value = cue.scene;
+    paint.beatTime.value = beatTime;
+    paint.dread.value = mood.level;
+    // The figure in the pavilion thins out when a real pointer lantern finds
+    // her, and while her echo stands closer. She returns more slowly than she leaves.
+    const echo =
+      cue.scene === ghost.plate
+        ? THREE.MathUtils.smoothstep(beatTime, 0, 0.8) * (1 - THREE.MathUtils.smoothstep(beatTime, 2.1, 3))
+        : 0;
+    let gone = Math.max(THREE.MathUtils.smoothstep(Math.sin(now * 0.37), 0.93, 1), echo * mood.level);
+    if (position > 2.4)
+      gone = Math.max(gone, (1 - THREE.MathUtils.smoothstep(reach(ghost).distance, 0.1, 0.24)) * motion.pointerLive);
     absence.current += (gone - absence.current) * (1 - Math.exp(-dt * (gone > absence.current ? 2.6 : 0.7)));
     paint.vanish.value = absence.current;
+    // Her echo appears left of the railing, wherever that falls on this screen.
+    {
+      const view = framing(ghost.plate, aspect, ratioOf(ghost.plate));
+      const screenX = THREE.MathUtils.lerp(0.57, 0.4, THREE.MathUtils.clamp((1.1 - aspect) / 0.3, 0, 1));
+      paint.echoAt.value.set((screenX - view.anchor[0]) * view.crop[0] + view.anchor[0], 0.465);
+    }
+    // The tuyul leans away from the lantern, to whichever side is darker.
+    let push = 0;
+    if (position > 0.4 && position < 1.6) {
+      const near = reach(tuyul);
+      push = (1 - THREE.MathUtils.smoothstep(near.distance, 0.07, 0.25)) * Math.sign(near.x || 1) * motion.pointerLive;
+    }
+    flee.current += (push - flee.current) * (1 - Math.exp(-dt * 6));
+    paint.repel.value = flee.current;
     const air = Math.min(palette.length - 2, Math.floor(position));
     particles.rim.value.lerpColors(palette[air][0], palette[air + 1][0], position - air);
     particles.core.value.lerpColors(palette[air][1], palette[air + 1][1], position - air);

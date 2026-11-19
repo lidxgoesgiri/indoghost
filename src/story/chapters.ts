@@ -4,6 +4,8 @@ type Line = Record<StoryLanguage, string>;
 interface Chapter {
   image: string;
   frame: readonly [number, number];
+  /** Portrait art direction: anchor x, anchor y (from the bottom) and zoom, so the focal point clears the copy. */
+  portrait: readonly [number, number, number];
   lantern: readonly [number, number];
   location: Line;
   title: Line;
@@ -15,6 +17,7 @@ export const chapters: readonly Chapter[] = [
   {
     image: 'kalisepi.webp',
     frame: [0.66, 0.5],
+    portrait: [0.69, 0, 1.32],
     lantern: [0.69, 0.48],
     location: { id: 'Gerbang desa', en: 'The village gate' },
     title: { id: 'Indo', en: 'Indo' },
@@ -27,6 +30,7 @@ export const chapters: readonly Chapter[] = [
   {
     image: 'coin-alley.webp',
     frame: [0.65, 0.48],
+    portrait: [0.7, 0, 1.34],
     lantern: [0.82, 0.79],
     location: { id: 'Gang koin', en: 'The coin alley' },
     title: { id: 'Gemerincing', en: 'The missing' },
@@ -39,6 +43,7 @@ export const chapters: readonly Chapter[] = [
   {
     image: 'lantern-floor.webp',
     frame: [0.65, 0.5],
+    portrait: [0.62, 0.25, 1.2],
     lantern: [0.866, 0.6],
     location: { id: 'Serambi tegel', en: 'The tiled veranda' },
     title: { id: 'Jejak di', en: 'Beneath the' },
@@ -51,6 +56,7 @@ export const chapters: readonly Chapter[] = [
   {
     image: 'whisper-house.webp',
     frame: [0.69, 0.5],
+    portrait: [0.72, 0, 1.26],
     lantern: [0.79, 0.48],
     location: { id: 'Pendopo tua', en: 'The old pavilion' },
     title: { id: 'Tawa di balik', en: 'Behind the' },
@@ -62,9 +68,16 @@ export const chapters: readonly Chapter[] = [
   },
 ];
 
+export type Dread = 'quiet' | 'balanced' | 'full';
+
 export interface StoryFrame {
   position: number;
   pointerX: number;
   pointerY: number;
+  /** 1 while a real pointer (mouse hover or a recent tap) holds the lantern, easing to 0 otherwise. */
+  pointerLive: number;
+  dread: Dread;
+  /** Called when a chapter's scare beat starts, so sound can follow the picture. */
+  onBeat?: (chapter: number) => void;
   draw?: (seconds: number) => void;
 }

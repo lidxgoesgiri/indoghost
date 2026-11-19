@@ -6,7 +6,7 @@ import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import { asset } from '../assets';
 import { chapters } from './chapters';
-import type { StoryFrame, StoryLanguage } from './chapters';
+import type { Dread, StoryFrame, StoryLanguage } from './chapters';
 import './story.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -17,9 +17,13 @@ interface Props {
   lang: StoryLanguage;
   reducedMotion: boolean;
   suspended: boolean;
+  dread: Dread;
   playLabel: string;
   onPlay: (trigger: HTMLElement) => void;
   onGuide: (trigger: HTMLElement) => void;
+  /** The chapter whose ambience should play, or null when the story is out of view or covered. */
+  onScene: (chapter: number | null) => void;
+  onBeat: (chapter: number) => void;
 }
 
 class SceneBoundary extends Component<{ onFailure: () => void; children: ReactNode }, { failed: boolean }> {
@@ -76,12 +80,25 @@ function supportsWebGL() {
   return webGLAvailable;
 }
 
-export default function Story({ lang, reducedMotion, suspended, playLabel, onPlay, onGuide }: Props) {
+export default function Story({
+  lang,
+  reducedMotion,
+  suspended,
+  dread,
+  playLabel,
+  onPlay,
+  onGuide,
+  onScene,
+  onBeat,
+}: Props) {
   const id = lang === 'id';
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const art = useRef<HTMLDivElement>(null);
-  const frame = useRef<StoryFrame>({ position: 0, pointerX: 0, pointerY: 0 });
+  const frame = useRef<StoryFrame>({ position: 0, pointerX: 0, pointerY: 0, pointerLive: 0, dread });
+  const [inView, setInView] = useState(true);
+  frame.current.dread = dread;
+  frame.current.onBeat = onBeat;
   const smooth = useRef<Lenis | null>(null);
   const cameraTrack = useRef<ScrollTrigger | null>(null);
   const [index, setIndex] = useState(0);
@@ -126,6 +143,22 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
     if (suspended) smooth.current?.stop();
     else smooth.current?.start();
   }, [suspended]);
+
+  // Ambience belongs to the village: it follows the chapter on screen and
+  // falls silent once the story scrolls away or a dialog takes over.
+  useEffect(() => {
+    const root = section.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.intersectionRatio > 0.2), {
+      threshold: [0, 0.2, 0.4],
+    });
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    onScene(suspended || !inView ? null : index);
+  }, [index, suspended, inView, onScene]);
+  useEffect(() => () => onScene(null), [onScene]);
 
   useEffect(() => {
     if (reducedMotion || suspended || wantCanvas || renderer === 'fallback') return;
@@ -198,18 +231,30 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
     });
     cameraTrack.current = shot.scrollTrigger!;
     place(shot.progress() * last);
-    const aim = { x: 0, y: 0 };
-    const point = (e: PointerEvent) => {
-      if (e.pointerType === 'touch' || lock.current) return;
+    // A mouse carries the lantern while it hovers. A tap sets it down for a
+    // moment. Otherwise the lantern drifts on its own, so touch screens and
+    // idle visitors still see the light search the scene.
+    const aim = { x: 0, y: 0, hover: false, until: 0 };
+    const locate = (e: PointerEvent) => {
       const bounds = screen.getBoundingClientRect();
       aim.x = ((e.clientX - bounds.left) / bounds.width) * 2 - 1;
       aim.y = 1 - ((e.clientY - bounds.top) / bounds.height) * 2;
     };
-    const leave = () => {
-      aim.x = 0;
-      aim.y = 0;
+    const point = (e: PointerEvent) => {
+      if (e.pointerType === 'touch' || lock.current) return;
+      aim.hover = true;
+      locate(e);
+    };
+    const tap = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch' || lock.current) return;
+      locate(e);
+      aim.until = performance.now() + 2600;
+    };
+    const leave = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') aim.hover = false;
     };
     screen.addEventListener('pointermove', point, { passive: true });
+    screen.addEventListener('pointerdown', tap, { passive: true });
     screen.addEventListener('pointerleave', leave);
     let visible = true,
       elapsed = 0,
@@ -225,9 +270,14 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
       if (!visible) return;
       // Follow the display while the camera or the lantern is travelling, and
       // idle at half rate when only the weather is moving.
+      const live = aim.hover || performance.now() < aim.until;
+      if (!live) {
+        aim.x = 0.32 * Math.sin(elapsed * 0.29) + 0.12 * Math.sin(elapsed * 0.71);
+        aim.y = -0.1 + 0.2 * Math.sin(elapsed * 0.41 + 1.3);
+      }
       const travelling =
         Math.abs(motion.position - paintedAt) > 0.0004 ||
-        Math.abs(aim.x - motion.pointerX) + Math.abs(aim.y - motion.pointerY) > 0.004;
+        Math.abs(aim.x - motion.pointerX) + Math.abs(aim.y - motion.pointerY) > (live ? 0.004 : 0.06);
       if (seconds - renderedAt < (travelling ? 1 / 75 : 1 / 31)) return;
       paintedAt = motion.position;
       const dt = Math.min(0.075, seconds - renderedAt || delta / 1000);
@@ -236,6 +286,7 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
       const ease = 1 - Math.exp(-dt * 5);
       motion.pointerX += (aim.x - motion.pointerX) * ease;
       motion.pointerY += (aim.y - motion.pointerY) * ease;
+      motion.pointerLive += ((live ? 1 : 0) - motion.pointerLive) * (1 - Math.exp(-dt * 3));
       if (motion.draw) motion.draw(elapsed);
       else {
         plates.style.setProperty('--story-aim-x', motion.pointerX * 0.7 + '%');
@@ -249,6 +300,7 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
       gsap.ticker.remove(tick);
       observer.disconnect();
       screen.removeEventListener('pointermove', point);
+      screen.removeEventListener('pointerdown', tap);
       screen.removeEventListener('pointerleave', leave);
       lenis.off('scroll', ScrollTrigger.update);
       lenis.destroy();
@@ -298,7 +350,9 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
               className="story-plate"
               style={{
                 backgroundImage: 'url("' + asset(scene.image) + '")',
-                backgroundPosition: scene.frame[0] * 100 + '% ' + scene.frame[1] * 100 + '%',
+                ['--frame' as string]: scene.frame[0] * 100 + '% ' + (1 - scene.frame[1]) * 100 + '%',
+                ['--frame-tall' as string]: scene.portrait[0] * 100 + '% ' + (1 - scene.portrait[1]) * 100 + '%',
+                ['--zoom-tall' as string]: String(scene.portrait[2]),
                 ...(reducedMotion
                   ? { visibility: i === index ? 'visible' : 'hidden', clipPath: 'none' }
                   : {}),

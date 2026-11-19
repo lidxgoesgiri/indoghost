@@ -37,6 +37,7 @@
 }
 .story-plate {
   background-size: cover;
+  background-position: var(--frame, 66% 50%);
   background-repeat: no-repeat;
   transform: translate3d(calc(var(--story-truck, 0%) + var(--story-aim-x, 0%)), var(--story-aim-y, 0%), 0)
     scale(var(--story-dolly, 1.025));
@@ -45,6 +46,13 @@
 }
 .story-plate:first-child {
   visibility: visible;
+}
+/* Portrait art direction for the poster: same focal points as the WebGL camera. */
+@media (max-aspect-ratio: 1/1) {
+  .story-plate {
+    background-size: auto calc(var(--zoom-tall, 1) * 100%);
+    background-position: var(--frame-tall, var(--frame));
+  }
 }
 .story-foreground {
   position: absolute;

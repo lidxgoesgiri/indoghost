@@ -7,7 +7,7 @@ import { FieldGuide } from './FieldGuide';
 import { Icon } from './Icon';
 
 function Village() {
-  const { open, status, modalOpen, setSound, setLanguage } = useCampaign();
+  const { open, status, modalOpen, setSound, setLanguage, scene, sting } = useCampaign();
   const [guideOpen, setGuideOpen] = useState(false);
   const guideTrigger = useRef<HTMLElement | null>(null);
   const id = status.lang === 'id';
@@ -86,8 +86,11 @@ function Village() {
           lang={status.lang}
           reducedMotion={status.reducedMotion}
           suspended={modalOpen || guideOpen}
+          dread={status.horror}
           playLabel={title}
           onPlay={(trigger) => open('play', trigger)}
+          onScene={scene}
+          onBeat={sting}
           onGuide={(trigger) => {
             guideTrigger.current = trigger;
             setGuideOpen(true);
