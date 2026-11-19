@@ -60,6 +60,7 @@
 .story-canvas {
   z-index: -4;
   opacity: 0;
+  transition: opacity 1.2s ease;
 }
 .story-sequence[data-renderer='webgl'] .story-canvas {
   opacity: 1;
@@ -72,7 +73,26 @@
       #ffd19815,
       transparent
     ),
-    linear-gradient(168deg, transparent 42%, #86b1a00b 61%, transparent 72%);
+    linear-gradient(168deg, transparent 42%, #86b1a00b 61%, transparent 72%),
+    radial-gradient(ellipse 78% 82% at 62% 46%, transparent 48%, #050908b0 100%);
+}
+/* Letterbox that closes in while the camera cuts between locations. */
+.story-shade::before,
+.story-shade::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  height: clamp(12px, 3.6vh, 38px);
+  background: #050807;
+  transform: scaleY(var(--story-cut, 0));
+}
+.story-shade::before {
+  top: 0;
+  transform-origin: top;
+}
+.story-shade::after {
+  bottom: var(--story-foot, 55px);
+  transform-origin: bottom;
 }
 .story-sequence[data-renderer='webgl'] .story-atmosphere {
   display: none;
@@ -123,13 +143,13 @@
   color: var(--story-copper);
   margin: 0 0 clamp(14px, 2.5vh, 28px);
 }
-.story-kicker > span {
+.story-kicker > span:first-child {
   position: relative;
   width: 36px;
   height: 1px;
   background: var(--story-copper);
 }
-.story-kicker > span::after {
+.story-kicker > span:first-child::after {
   content: '';
   width: 5px;
   height: 5px;
@@ -139,17 +159,66 @@
   right: 0;
   transform: rotate(45deg);
 }
-.story-lines {
-  animation: story-line-arrival 0.52s cubic-bezier(0.22, 0.65, 0.32, 1) both;
+.story-kicker-text {
+  animation: story-settle 0.6s ease both;
 }
-@keyframes story-line-arrival {
+/* Copy steps back while the picture cuts, then each line surfaces in turn. */
+.story-lines {
+  opacity: calc(1 - var(--story-cut, 0) * 0.5);
+}
+.story-lines > * {
+  animation: story-surface 0.82s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.story-lines > :nth-child(2) {
+  animation-delay: 0.09s;
+}
+.story-lines > :nth-child(3) {
+  animation-delay: 0.17s;
+}
+@keyframes story-surface {
   from {
-    clip-path: inset(0 0 14% 0);
-    transform: translate3d(-9px, 10px, 0);
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    filter: blur(8px);
   }
   to {
-    clip-path: inset(-4% -5% -4% -5%);
+    opacity: 1;
     transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+@keyframes story-settle {
+  from {
+    opacity: 0;
+    transform: translate3d(-10px, 0, 0);
+  }
+}
+/* The second half of the name arrives late, like something stepping into lamplight. */
+/* Stays inline: an inline-block would split the heading's accessible name. */
+.story-wordmark em {
+  animation: story-apparition 2.7s 0.35s cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+@keyframes story-apparition {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+  }
+  36% {
+    opacity: 0.9;
+    filter: blur(0);
+  }
+  47% {
+    opacity: 0.42;
+  }
+  58% {
+    opacity: 0.86;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
   }
 }
 .story-wordmark,
@@ -222,23 +291,88 @@
   font: 600 0.91rem/1.3 var(--sans, system-ui, sans-serif);
 }
 .story-play {
+  position: relative;
   min-height: 50px;
   border: 1px solid #cf8065;
-  background: #954130;
+  background:
+    linear-gradient(105deg, transparent 38%, #ffd9b340 50%, transparent 62%) 135% 0 / 260% 100% no-repeat,
+    #954130;
   color: #fff5e6;
   padding: 0 clamp(18px, 2vw, 32px);
   border-radius: 2px;
+  transition:
+    background-position 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    translate 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    scale 0.14s ease;
+}
+/* Ember glow that breathes behind the primary action. */
+.story-play::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  box-shadow:
+    0 0 30px 1px #e2683f,
+    0 0 70px 6px #c7432866;
+  opacity: 0.2;
+  pointer-events: none;
+  animation: story-ember 3.6s ease-in-out infinite;
+  transition: opacity 0.3s ease;
+}
+@keyframes story-ember {
+  50% {
+    opacity: 0.5;
+  }
 }
 .story-play:hover {
-  background: #a84e38;
+  background-color: #a84e38;
+  background-position: -35% 0;
+  border-color: #f0a889;
+  translate: 0 -1px;
+}
+.story-play:hover::after {
+  animation: none;
+  opacity: 0.72;
+}
+.story-play:active {
+  translate: 0 0;
+  scale: 0.985;
+}
+.story-play svg,
+.story-guide svg {
+  transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.story-play:hover svg {
+  transform: translateX(2px) scale(1.1);
 }
 .story-guide {
   color: #edeade;
+  background: linear-gradient(#ffcb9a, #ffcb9a) 0 calc(100% - 9px) / 0 1px no-repeat;
+  transition:
+    color 0.25s ease,
+    background-size 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.story-guide:hover {
+  background-size: 100% 1px;
+}
+.story-guide:hover svg {
+  transform: rotate(-6deg) scale(1.06);
+}
+.story-explore,
+.story-skip {
+  transition:
+    color 0.25s ease,
+    text-decoration-color 0.25s ease;
 }
 .story-guide:hover,
 .story-explore:hover,
 .story-skip:hover {
   color: #ffcb9a;
+}
+.story-skip:hover {
+  text-decoration-color: #ffcb9a;
 }
 .story-guide svg,
 .story-place svg {
@@ -289,6 +423,7 @@
   color: #b7bfb0;
   font-size: 0.72rem;
   letter-spacing: 0.03em;
+  transition: color 0.3s ease;
 }
 .story-steps button[aria-current],
 .story-steps button:hover {
@@ -302,9 +437,21 @@
   left: 0;
   background: #b9ba9e7a;
 }
-.story-steps button[aria-current] .story-step-line {
+.story-step-line::after {
+  content: '';
+  position: absolute;
+  inset: -0.5px 0;
   background: #e6aa83;
-  height: 2px;
+  box-shadow: 0 0 10px #e88a5caa;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.story-steps button:hover .story-step-line::after {
+  transform: scaleX(0.35);
+}
+.story-steps button[aria-current] .story-step-line::after {
+  transform: scaleX(1);
 }
 .story-step-name {
   font-family: var(--sans, system-ui, sans-serif);
@@ -342,6 +489,16 @@
 .story-scroll-icon svg {
   width: 15px;
   height: 18px;
+  animation: story-beckon 2.4s cubic-bezier(0.5, 0, 0.3, 1) infinite;
+}
+@keyframes story-beckon {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
 }
 .story-skip {
   color: #c4cabb;
@@ -355,8 +512,8 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background: #d89875;
+  height: 2px;
+  background: linear-gradient(90deg, #8e4a35, #f0b48e);
   transform-origin: left;
   transform: scaleX(var(--story-path));
 }
@@ -374,8 +531,23 @@
 .story-sequence[data-motion='reduced'] .story-stage {
   position: relative;
 }
-.story-sequence[data-motion='reduced'] .story-lines {
+.story-sequence[data-motion='reduced'] :is(.story-lines > *, .story-wordmark em, .story-kicker-text),
+.story-sequence[data-motion='reduced'] .story-play::after,
+.story-sequence[data-motion='reduced'] .story-scroll-icon svg {
   animation: none;
+}
+.story-sequence[data-motion='reduced'] :is(.story-play, .story-guide),
+.story-sequence[data-motion='reduced'] .story-step-line::after {
+  transition: none;
+}
+.story-sequence[data-motion='reduced'] .story-shade::before,
+.story-sequence[data-motion='reduced'] .story-shade::after {
+  display: none;
+}
+/* Decorative loops rest while a dialog or game holds the focus. */
+.story-sequence[data-suspended='true'] .story-play::after,
+.story-sequence[data-suspended='true'] .story-scroll-icon svg {
+  animation-play-state: paused;
 }
 .story-sequence[data-motion='reduced'] .story-plate {
   transform: none;
@@ -480,6 +652,9 @@
     min-height: 47px;
     gap: 6px;
   }
+  .story-shade::after {
+    bottom: 48px;
+  }
   .story-explore {
     gap: 6px;
     font-size: 0.6rem;
@@ -559,7 +734,11 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .story-lines {
+  .story-lines > *,
+  .story-wordmark em,
+  .story-kicker-text,
+  .story-play::after,
+  .story-scroll-icon svg {
     animation: none;
   }
 }

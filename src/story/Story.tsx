@@ -153,6 +153,9 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
       const phase = Math.max(0, Math.min(1, (position - floor - 0.18) / 0.62));
       const reveal = phase * phase * (3 - 2 * phase);
       root.style.setProperty('--story-path', String(position / last));
+      // 0 at rest, 1 in the middle of a cut: drives the letterbox and the copy dip.
+      const cut = Math.sin(Math.PI * reveal);
+      root.style.setProperty('--story-cut', cut < 0.004 ? '0' : cut.toFixed(3));
       images.forEach((image, i) => {
         image.style.visibility = i === floor || (i === floor + 1 && reveal > 0) ? 'visible' : 'hidden';
         image.style.clipPath =
@@ -210,7 +213,8 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
     screen.addEventListener('pointerleave', leave);
     let visible = true,
       elapsed = 0,
-      renderedAt = 0;
+      renderedAt = 0,
+      paintedAt = -1;
     const observer = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
     });
@@ -218,7 +222,14 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
     const tick = (seconds: number, delta: number) => {
       if (lock.current || document.hidden) return;
       lenis.raf(seconds * 1000);
-      if (!visible || seconds - renderedAt < 1 / 30) return;
+      if (!visible) return;
+      // Follow the display while the camera or the lantern is travelling, and
+      // idle at half rate when only the weather is moving.
+      const travelling =
+        Math.abs(motion.position - paintedAt) > 0.0004 ||
+        Math.abs(aim.x - motion.pointerX) + Math.abs(aim.y - motion.pointerY) > 0.004;
+      if (seconds - renderedAt < (travelling ? 1 / 75 : 1 / 31)) return;
+      paintedAt = motion.position;
       const dt = Math.min(0.075, seconds - renderedAt || delta / 1000);
       renderedAt = seconds;
       elapsed += dt;
@@ -318,7 +329,13 @@ export default function Story({ lang, reducedMotion, suspended, playLabel, onPla
           <div className="story-heading">
             <p className="story-kicker">
               <span aria-hidden="true" />
-              {id ? 'Horor folklor Indonesia' : 'Indonesian folk horror'}
+              <span className="story-kicker-text" key={index}>
+                {index === 0
+                  ? id
+                    ? 'Horor folklor Indonesia'
+                    : 'Indonesian folk horror'
+                  : (id ? 'Bab ' : 'Chapter ') + number(index) + ' · ' + chapter.location[lang]}
+              </span>
             </p>
             {index !== 0 && <h1 className="story-sr">IndoGhost</h1>}
             <div className="story-lines" key={index}>
