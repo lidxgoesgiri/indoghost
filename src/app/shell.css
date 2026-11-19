@@ -372,6 +372,10 @@ html[data-reduced='true'] :is(.encounter, .encounter *, .main-nav *, .header-too
   .encounter-note {
     max-width: 90%;
   }
+  .encounter-title,
+  .encounter-note {
+    padding-right: 44px;
+  }
   .encounter-play {
     display: grid;
   }
