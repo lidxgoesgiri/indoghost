@@ -37,6 +37,12 @@ const shapes = {
   door: <path d="M3 21h17M6 20V4h11v16M8 4l5-2v20l-5-2m2-7h.1" />,
   play: <path d="m7 4 13 8-13 8Z" stroke="none" fill="currentColor" />,
   close: <path d="m5 5 14 14M19 5 5 19" />,
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3c2.6 2.5 3.8 5.5 3.8 9s-1.2 6.5-3.8 9c-2.6-2.5-3.8-5.5-3.8-9S9.4 5.5 12 3Z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 export function Icon({ name }: { name: keyof typeof shapes }) {
   return (

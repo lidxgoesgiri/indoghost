@@ -21,8 +21,10 @@
   --copper: #be765a;
   --line: #3c4337;
   --display: 'Cormorant Garamond', Georgia, serif;
-  --sans: 'Segoe UI', system-ui, sans-serif;
-  --mono: Consolas, ui-monospace, monospace;
+  --sans: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Roboto, system-ui, sans-serif;
+  --mono: 'Cascadia Mono', Consolas, 'SF Mono', Menlo, 'Roboto Mono', ui-monospace, monospace;
+  /* One kicker mark everywhere: a copper rule ending in a lantern diamond. */
+  --kicker-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='7'%3E%3Cpath d='M0 3.5h31' stroke='%23e4a081'/%3E%3Cpath d='M32.5 1 35 3.5 32.5 6 30 3.5Z' fill='%23e4a081'/%3E%3C/svg%3E") left center / 36px 7px no-repeat;
   --gutter: clamp(20px, 5.4vw, 94px);
   background: var(--night);
   color: var(--bone);
@@ -83,9 +85,10 @@ a[href] {
 }
 .shell-kicker:before {
   content: '';
-  width: 26px;
-  height: 1px;
-  background: var(--copper);
+  flex: none;
+  width: 36px;
+  height: 7px;
+  background: var(--kicker-mark);
 }
 .encounters {
   background: #101410;
@@ -212,7 +215,7 @@ a[href] {
   gap: 8px;
   background: #121810d6;
   color: #ecebdd;
-  font-size: 0.67rem;
+  font-size: 0.7rem;
   padding: 4px 8px;
   border: 1px solid #8b907e80;
   margin-bottom: auto;
@@ -492,13 +495,35 @@ a.brand-mark:hover img {
 .guide-heading button {
   min-width: 44px;
 }
-.header-tools #sound {
-  gap: 8px;
+.header-tools #sound,
+.header-tools #language {
+  gap: 7px;
   font-size: 0.78rem;
 }
 .header-tools #language {
-  font: 0.75rem var(--mono);
+  font-family: var(--mono);
   letter-spacing: 0.04em;
+  padding-inline: 6px;
+}
+.header-tools #language .ui-icon {
+  width: 15px;
+  height: 15px;
+}
+.tool-state {
+  min-width: 2.4em;
+  padding: 1px 6px;
+  border: 1px solid #4b5246;
+  border-radius: 999px;
+  font: 500 0.64rem/1.4 var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #9fa594;
+}
+#sound[aria-pressed='true'] .tool-state {
+  border-color: #cf8065;
+  background: #954130;
+  color: #fff5e6;
 }
 .header-divider {
   height: 16px;
@@ -511,6 +536,14 @@ a.brand-mark:hover img {
 .village-footer button:hover,
 .guide-heading button:hover {
   color: #fff5e1;
+}
+.guide-heading .guide-close {
+  gap: 7px;
+  padding-left: 10px;
+}
+.guide-heading .guide-close .ui-icon {
+  width: 15px;
+  height: 15px;
 }
 .village-footer > .shell-wrap {
   gap: 22px;
@@ -592,19 +625,33 @@ a.brand-mark:hover img {
 }
 .guide-back {
   min-height: 44px;
+  margin-top: 6px;
   padding: 4px 18px;
-  background: #8a4636;
-  border: 1px solid #b5785d;
-  color: #fff6e9;
+  background: #954130;
+  border: 1px solid #cf8065;
+  border-radius: 2px;
+  color: #fff5e6;
+  font-weight: 600;
+  box-shadow: 0 0 26px -8px #e2683f99;
 }
 .guide-back:hover {
-  background: #9e513f;
+  background: #a84e38;
+  border-color: #f0a889;
 }
 html:has(dialog[open]) {
   overflow: hidden;
 }
 @media (max-width: 760px) {
-  .header-tools #sound span {
+  /* Icon only on small screens; the name stays available to assistive tech. */
+  .header-tools #sound .tool-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .header-tools #sound .tool-state {
     display: none;
   }
   .header-divider {

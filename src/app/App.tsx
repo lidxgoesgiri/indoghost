@@ -62,23 +62,22 @@ function Village() {
             </button>
           </nav>
           <div className="header-tools">
-            <button
-              id="sound"
-              aria-pressed={status.sound}
-              aria-label={id ? 'Suara permainan' : 'Game sound'}
-              onClick={() => setSound(!status.sound)}
-            >
+            {/* The accessible name stays "Sound"; aria-pressed carries the state, the chip shows it. */}
+            <button id="sound" aria-pressed={status.sound} onClick={() => setSound(!status.sound)}>
               <Icon name={status.sound ? 'volume' : 'mute'} />
-              <span>
-                {id ? (status.sound ? 'Suara aktif' : 'Suara mati') : status.sound ? 'Sound on' : 'Sound off'}
+              <span className="tool-label">{id ? 'Suara' : 'Sound'}</span>
+              <span className="tool-state" aria-hidden="true">
+                {id ? (status.sound ? 'aktif' : 'mati') : status.sound ? 'on' : 'off'}
               </span>
             </button>
             <span aria-hidden="true" className="header-divider" />
             <button
               id="language"
-              aria-label={id ? 'Switch to English' : 'Ganti ke bahasa Indonesia'}
+              aria-label={id ? 'ID · Switch to English' : 'EN · Ganti ke bahasa Indonesia'}
+              title={id ? 'Switch to English' : 'Ganti ke bahasa Indonesia'}
               onClick={() => setLanguage(id ? 'en' : 'id')}
             >
+              <Icon name="globe" />
               {status.lang.toUpperCase()}
             </button>
             <button

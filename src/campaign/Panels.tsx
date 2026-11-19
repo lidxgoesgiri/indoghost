@@ -457,8 +457,10 @@ export function Journal({
       <div className="igc-actions">
         <Action primary onClick={play}>
           {records.length === 7
-            ? t('Revisit the dawn', 'Kunjungi fajar')
-            : t('Continue the watch', 'Lanjutkan ronda')}
+            ? t('Revisit the dawn', 'Kembali ke fajar')
+            : records.length === 0
+              ? t('Start night watch', 'Mulai ronda')
+              : t('Continue night ', 'Lanjut malam ') + number(records.length + 1)}
         </Action>
         <Action onClick={map}>{t('Night map', 'Peta malam')}</Action>
       </div>

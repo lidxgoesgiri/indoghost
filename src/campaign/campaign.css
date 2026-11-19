@@ -9,8 +9,8 @@ html:has(.igc-dialog[open]) { overflow: hidden; }
   --igc-amber: #edbb75;
   --igc-red: #ae5546;
   --igc-serif: 'Cormorant Garamond', 'Palatino Linotype', Georgia, serif;
-  --igc-sans: 'DM Sans', system-ui, sans-serif;
-  --igc-mono: 'IBM Plex Mono', Consolas, monospace;
+  --igc-sans: var(--sans, system-ui, sans-serif);
+  --igc-mono: var(--mono, ui-monospace, monospace);
   box-sizing: border-box;
   color-scheme: dark;
   color: var(--igc-bone);
@@ -44,7 +44,7 @@ html:has(.igc-dialog[open]) { overflow: hidden; }
 }
 .igc-lockup { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14px; }
 .igc-brand { font: 600 25px/1 var(--igc-serif); letter-spacing: -.055em; color: var(--igc-bone); }
-.igc-world { font: 10px/1.4 var(--igc-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--igc-soft); }
+.igc-world { font: 11px/1.4 var(--igc-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--igc-soft); }
 .igc-pane { padding: clamp(26px, 5.2vw, 54px) clamp(22px, 5.7vw, 56px); }
 .igc-dialog[data-screen=intro] .igc-pane,
 .igc-dialog[data-screen=ending] .igc-pane,
@@ -87,10 +87,10 @@ html:has(.igc-dialog[open]) { overflow: hidden; }
 .igc-dialog button.igc-map-pin:hover { outline:2px solid #fae1b1; outline-offset:2px; }
 .igc-dialog .igc-practice-level { margin-top: 18px; }
 .igc-kicker, .igc-label {
-  font: 500 11px/1.6 var(--igc-mono); color: var(--igc-amber); text-transform: uppercase; letter-spacing: .13em;
+  font: 500 11px/1.6 var(--igc-mono); color: #e4a081; text-transform: uppercase; letter-spacing: .13em;
 }
-.igc-kicker { display: flex; align-items: center; gap: 11px; margin: 0 0 12px; }
-.igc-kicker::before { content: ''; display: inline-block; width: 22px; height: 1px; background: var(--igc-red); }
+.igc-kicker { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; }
+.igc-kicker::before { content: ''; flex: none; width: 36px; height: 7px; background: var(--kicker-mark); }
 .igc-heading { color: var(--igc-bone); font: 500 clamp(37px, 6vw, 65px)/1.04 var(--igc-serif); letter-spacing: -.052em; margin: 0; text-wrap: balance; }
 .igc-description { margin: 18px 0 0; font-size: 16px; line-height: 1.65; max-width: 56ch; color: #d5d6ca; }
 .igc-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 26px; }

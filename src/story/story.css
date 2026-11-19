@@ -621,10 +621,19 @@
 }
 @media (max-width: 920px) {
   .story-step-name {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .story-steps button[aria-current] .story-step-name {
-    display: inline;
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
   }
   .story-heading {
     max-width: 68%;
@@ -650,8 +659,8 @@
     padding-bottom: 30px;
   }
   .story-kicker {
-    font-size: 0.66rem;
-    letter-spacing: 0.15em;
+    font-size: 0.68rem;
+    letter-spacing: 0.13em;
     gap: 10px;
     margin-bottom: 15px;
   }
@@ -707,8 +716,8 @@
     width: 14px;
   }
   .story-place small {
-    font-size: 0.56rem;
-    letter-spacing: 0.08em;
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
     margin-top: 3px;
   }
   .story-steps {
@@ -719,7 +728,11 @@
     justify-content: center;
   }
   .story-steps button[aria-current] .story-step-name {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .story-foot-inner {
     min-height: 47px;
@@ -730,11 +743,12 @@
   }
   .story-explore {
     gap: 6px;
-    font-size: 0.6rem;
-    letter-spacing: 0.045em;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
   }
   .story-skip {
-    font-size: 0.63rem;
+    font-size: 0.68rem;
+    text-align: right;
   }
   .story-scroll-icon {
     width: 12px;

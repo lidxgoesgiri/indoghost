@@ -428,7 +428,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
               {t('Restart night', 'Ulangi malam')}
             </Action>
             <Action onClick={() => setView({ screen: 'confirm', confirm: 'leave' })}>
-              {t('Return to village', 'Kembali ke desa')}
+              {t('Return to the village', 'Kembali ke desa')}
             </Action>
           </div>
         </>
@@ -474,7 +474,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
             <Action primary onClick={start}>
               {t('Try again', 'Coba lagi')}
             </Action>
-            <Action onClick={leave}>{t('Return to village', 'Kembali ke desa')}</Action>
+            <Action onClick={leave}>{t('Return to the village', 'Kembali ke desa')}</Action>
           </div>
         </>
       );
@@ -511,7 +511,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
             <Action primary onClick={start}>
               {t('Retry night', 'Coba lagi')}
             </Action>
-            <Action onClick={leave}>{t('Return to village', 'Kembali ke desa')}</Action>
+            <Action onClick={leave}>{t('Return to the village', 'Kembali ke desa')}</Action>
           </div>
         </>
       );
@@ -546,10 +546,10 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
           <div className="igc-actions">
             <Action primary onClick={practice ? leave : last ? to('ending') : () => visit(night + 1)}>
               {practice
-                ? t('Return to village', 'Kembali ke desa')
+                ? t('Return to the village', 'Kembali ke desa')
                 : last
                   ? t('Welcome the dawn', 'Sambut fajar')
-                  : t('Continue to night ', 'Lanjut ke malam ') + number(night + 1)}
+                  : t('Continue night ', 'Lanjut malam ') + number(night + 1)}
             </Action>
             <Action onClick={start}>{t('Replay', 'Main lagi')}</Action>
             <Action onClick={journal}>{t('Night journal', 'Jurnal malam')}</Action>
@@ -582,7 +582,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
               {t('Read the journal', 'Baca jurnal')}
             </Action>
             <Action onClick={map}>{t('Night map', 'Peta malam')}</Action>
-            <Action onClick={leave}>{t('Return to village', 'Kembali ke desa')}</Action>
+            <Action onClick={leave}>{t('Return to the village', 'Kembali ke desa')}</Action>
           </div>
         </>
       );
@@ -634,7 +634,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
           </dl>
           <div className="igc-actions">
             <Action primary onClick={leave}>
-              {t('Return to village', 'Kembali ke desa')}
+              {t('Return to the village', 'Kembali ke desa')}
             </Action>
           </div>
         </>

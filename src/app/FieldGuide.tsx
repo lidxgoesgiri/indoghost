@@ -47,8 +47,9 @@ export function FieldGuide({ lang, close }: { lang: Lang; close: () => void }) {
     >
       <div className="guide-heading">
         <p className="shell-kicker">{id ? 'Catatan Mbah Ronda' : 'Mbah Ronda’s field notes'}</p>
-        <button type="button" aria-label={id ? 'Tutup' : 'Close'} onClick={close}>
+        <button type="button" className="guide-close" onClick={close}>
           <Icon name="close" />
+          {id ? 'Tutup' : 'Close'}
         </button>
       </div>
       <h2 id="guide-title">{id ? 'Cara bermain' : 'How to play'}</h2>
@@ -67,7 +68,7 @@ export function FieldGuide({ lang, close }: { lang: Lang; close: () => void }) {
         </section>
       ))}
       <button className="guide-back" type="button" onClick={close}>
-        {id ? 'Kembali ke desa' : 'Back to the village'}
+        {id ? 'Kembali ke desa' : 'Return to the village'}
       </button>
     </dialog>
   );

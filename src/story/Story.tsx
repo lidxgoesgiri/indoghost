@@ -481,12 +481,11 @@ export default function Story({
                   key={scene.image}
                   data-story-step={i}
                   aria-current={index === i ? 'step' : undefined}
-                  aria-label={number(i) + ' · ' + scene.location[lang]}
                   title={scene.location[lang]}
                   onClick={() => go(i)}
                 >
                   <span className="story-step-line" aria-hidden="true" />
-                  <span>{number(i)}</span>
+                  <span>{number(i)}</span>{' '}
                   <span className="story-step-name">{scene.location[lang]}</span>
                 </button>
               ))}
