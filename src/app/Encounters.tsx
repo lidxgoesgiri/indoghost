@@ -14,6 +14,7 @@ const encounters = [
       'Kembalikan koin warga sebelum tuyul menyusulmu.',
       'Return the villagers’ coins before the tuyul catches you.',
     ],
+    meta: ['Refleks · Tombol atau pad sentuh', 'Reflexes · Keys or touch pad'],
   },
   {
     mode: 'sweeper',
@@ -25,6 +26,7 @@ const encounters = [
       'Baca jejak di tegel. Temukan tempat tuyul bersembunyi.',
       'Read the tracks in the tiles. Find where the spirits hide.',
     ],
+    meta: ['Deduksi · Sentuh atau tombol', 'Deduction · Tap or keys'],
   },
   {
     mode: 'escape',
@@ -36,6 +38,7 @@ const encounters = [
       'Dengarkan langkah di balik pintu sebelum menyeberang.',
       'Listen at the door before you cross the floor.',
     ],
+    meta: ['Pendengaran · Paling seru dengan suara', 'Listening · Best with sound'],
   },
 ] as const;
 
@@ -86,6 +89,7 @@ export function Encounters({ lang, open }: { lang: Lang; open: (mode: Mode, trig
                 </span>
                 <span className="encounter-title">{e.title[i]}</span>
                 <span className="encounter-note">{e.note[i]}</span>
+                <span className="encounter-meta">{e.meta[i]}</span>
               </span>
               <span className="encounter-play">
                 <Icon name="play" />
