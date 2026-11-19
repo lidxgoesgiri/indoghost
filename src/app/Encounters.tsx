@@ -1,6 +1,7 @@
 import type { PointerEvent } from 'react';
 import type { Lang, Mode } from '../types';
 import { asset } from '../assets';
+import { GhostLayer } from './Ghosts';
 import { Icon } from './Icon';
 
 const encounters = [
@@ -55,6 +56,7 @@ export function Encounters({ lang, open }: { lang: Lang; open: (mode: Mode, trig
   const i = lang === 'id' ? 0 : 1;
   return (
     <section id="encounters" className="encounters" aria-labelledby="encounter-title" tabIndex={-1}>
+      <GhostLayer scene="encounters" />
       <div className="shell-wrap">
         <div className="encounter-heading">
           <div>

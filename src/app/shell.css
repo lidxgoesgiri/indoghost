@@ -951,3 +951,206 @@ html[data-reduced='true'] .creature-art img {
     aspect-ratio: 16 / 9;
   }
 }
+
+/* ---- Who else is here: background apparitions --------------------------- */
+.encounters {
+  position: relative;
+  overflow: hidden;
+}
+.bestiary {
+  overflow: hidden;
+}
+.bestiary > .shell-wrap,
+.encounters > .shell-wrap {
+  position: relative;
+  z-index: 1;
+}
+.ghost-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ghost-layer::before {
+  content: '';
+  position: absolute;
+  inset: 10% -30% auto;
+  height: 70%;
+  background:
+    radial-gradient(ellipse 30% 40% at 25% 60%, #8fa8a01a, transparent 70%),
+    radial-gradient(ellipse 26% 36% at 70% 40%, #a6b0c814, transparent 70%);
+  animation: ghost-mist 38s ease-in-out infinite alternate;
+}
+@keyframes ghost-mist {
+  to {
+    transform: translate3d(14%, -4%, 0);
+  }
+}
+.ghost {
+  position: absolute;
+  opacity: var(--ghost-o, 0.1);
+}
+.ghost-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.ghost-motion {
+  will-change: transform, opacity;
+}
+.ghost-kuntilanak .ghost-motion {
+  animation:
+    ghost-float 12s ease-in-out var(--ghost-delay) infinite,
+    ghost-presence 23s linear var(--ghost-delay) infinite;
+}
+.ghost-tuyul .ghost-motion {
+  animation: ghost-peek 15s cubic-bezier(0.5, 0, 0.3, 1) var(--ghost-delay) infinite;
+}
+.ghost-eyes .ghost-motion {
+  animation: ghost-watch 9s ease-in-out var(--ghost-delay) infinite;
+}
+.ghost .ghost-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ghost-blink 5.5s steps(1) var(--ghost-delay) infinite;
+}
+@keyframes ghost-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-0.8deg);
+  }
+  50% {
+    transform: translate3d(-12px, -18px, 0) rotate(0.9deg);
+  }
+}
+/* She is there, then she is not, and then she is again. */
+@keyframes ghost-presence {
+  0%,
+  58%,
+  100% {
+    opacity: 1;
+  }
+  61% {
+    opacity: 0.25;
+  }
+  62.5% {
+    opacity: 0.85;
+  }
+  65% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 0;
+  }
+  88% {
+    opacity: 1;
+  }
+}
+@keyframes ghost-peek {
+  0%,
+  100% {
+    transform: translate3d(0, 62%, 0);
+  }
+  22%,
+  64% {
+    transform: translate3d(0, 0, 0);
+  }
+  40% {
+    transform: translate3d(0, 4%, 0) rotate(-3deg);
+  }
+  70% {
+    transform: translate3d(0, 62%, 0);
+  }
+}
+@keyframes ghost-watch {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  15%,
+  70% {
+    opacity: 1;
+  }
+}
+@keyframes ghost-blink {
+  0%,
+  46%,
+  49%,
+  100% {
+    transform: scaleY(1);
+  }
+  47% {
+    transform: scaleY(0.1);
+  }
+}
+/* Placement keeps every figure off the reading columns. */
+.ghost-kunti-far {
+  --ghost-o: 0.24;
+  left: 54%;
+  top: clamp(20px, 3vw, 60px);
+  width: clamp(130px, 11vw, 180px);
+  filter: drop-shadow(0 0 24px #b8c6ff55);
+}
+.ghost-tuyul-low {
+  --ghost-o: 0.26;
+  left: 2.5%;
+  bottom: -6px;
+  width: clamp(84px, 8.5vw, 130px);
+}
+.ghost-eyes-gap {
+  --ghost-o: 0.75;
+  left: 47%;
+  top: clamp(40px, 5vw, 80px);
+  width: 34px;
+}
+.ghost-tuyul-ledge {
+  --ghost-o: 0.18;
+  right: 31%;
+  top: clamp(20px, 2.6vw, 44px);
+  width: clamp(70px, 7vw, 110px);
+}
+.ghost-eyes-corner {
+  --ghost-o: 0.7;
+  right: 7%;
+  bottom: 22px;
+  width: 30px;
+}
+.ghost-kunti-edge {
+  --ghost-o: 0.13;
+  left: -40px;
+  top: 4%;
+  width: clamp(110px, 10vw, 160px);
+  filter: drop-shadow(0 0 20px #b8c6ff44);
+}
+@media (max-width: 900px) {
+  .ghost-eyes-gap,
+  .ghost-tuyul-ledge {
+    display: none;
+  }
+  .ghost-kunti-far {
+    --ghost-o: 0.12;
+    left: auto;
+    right: 4%;
+    width: 110px;
+    top: 0;
+  }
+}
+@media (max-width: 660px) {
+  .ghost-kunti-edge {
+    display: none;
+  }
+  .ghost-kunti-far {
+    right: -30px;
+  }
+}
+html[data-reduced='true'] :is(.ghost, .ghost *) {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ghost,
+  .ghost * {
+    animation: none !important;
+  }
+}

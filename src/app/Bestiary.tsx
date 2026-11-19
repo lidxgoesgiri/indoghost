@@ -1,6 +1,7 @@
 import type { Lang, Mode, Route } from '../types';
 import { asset } from '../assets';
 import { modeName } from '../campaign/story';
+import { GhostLayer } from './Ghosts';
 import { Icon } from './Icon';
 
 type Line = readonly [string, string];
@@ -84,6 +85,7 @@ export function Bestiary({
   const i = lang === 'id' ? 1 : 0;
   return (
     <section id="bestiary" className="bestiary" aria-labelledby="bestiary-title" tabIndex={-1}>
+      <GhostLayer scene="bestiary" defs />
       <div className="shell-wrap">
         <div className="bestiary-heading">
           <p className="shell-kicker">{['Mbah Ronda’s field notes', 'Catatan Mbah Ronda'][i]}</p>
