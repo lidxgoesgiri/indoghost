@@ -300,7 +300,7 @@ const palette = [
 ].map(([rim, core]) => [new THREE.Color(rim), new THREE.Color(core)] as const);
 
 function VillageSet({ frame, onReady, onFailure }: Props) {
-  const { gl, size, camera, advance } = useThree();
+  const { gl, size, camera, advance, scene } = useThree();
   const plates = useLoader(
     THREE.TextureLoader,
     chapters.map((chapter) => asset(chapter.image)),
@@ -391,13 +391,34 @@ function VillageSet({ frame, onReady, onFailure }: Props) {
       advance(seconds, false);
     };
     const state = frame.current;
-    state.draw = draw;
-    draw(elapsed.current);
+    let live = true;
+    // Warm up off the critical path so the poster and the Play button stay
+    // responsive: decode images off-thread, compile shaders in parallel where
+    // the driver allows, then upload one texture per frame. The poster stays
+    // on screen until the first WebGL frame is ready.
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    (async () => {
+      const textures = [plates[0], plates[1], foliage, ...plates.slice(2)];
+      await Promise.all(
+        textures.map((texture) => (texture.image as HTMLImageElement).decode?.().catch(() => undefined)),
+      );
+      if (!live) return;
+      await gl.compileAsync(scene, camera).catch(() => undefined);
+      for (const texture of textures) {
+        if (!live) return;
+        gl.initTexture(texture);
+        await nextFrame();
+      }
+      if (!live) return;
+      state.draw = draw;
+      draw(elapsed.current);
+    })();
     return () => {
+      live = false;
       canvas.removeEventListener('webglcontextlost', lose);
       if (state.draw === draw) delete state.draw;
     };
-  }, [advance, frame, gl, onFailure, plates, foliage]);
+  }, [advance, camera, frame, gl, onFailure, plates, foliage, scene]);
 
   useFrame(() => {
     if (!plateShader.current || !fogShader.current || !moteShader.current) return;
