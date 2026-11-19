@@ -1,5 +1,5 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { Component, Fragment, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
@@ -68,6 +68,70 @@ function StoryMark({ kind }: { kind: 'play' | 'book' | 'down' | 'pin' | 'ear' })
     >
       {path[kind]}
     </svg>
+  );
+}
+
+/**
+ * Splits a line into animatable words (and optionally letters). The visual copy
+ * is hidden from assistive tech; a single readable string sits beside it.
+ */
+function Split({ text, from = 0, letters = false }: { text: string; from?: number; letters?: boolean }) {
+  const words = text.split(' ');
+  let order = from;
+  return (
+    <>
+      {words.map((word, w) => (
+        <Fragment key={w}>
+          <span className="story-mask">
+            <span className="story-word" style={{ '--i': order++ } as CSSProperties}>
+              {letters
+                ? Array.from(word).map((letter, l) => (
+                    <span key={l} className="story-char" style={{ '--c': l } as CSSProperties}>
+                      {letter}
+                    </span>
+                  ))
+                : word}
+            </span>
+          </span>
+          {w < words.length - 1 ? ' ' : null}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+/** Mono labels resolve out of noise, like a signal tuning in. Writes to the DOM directly. */
+function Decode({ text, run }: { text: string; run: boolean }) {
+  const node = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const target = node.current;
+    if (!target) return;
+    if (!run) {
+      target.textContent = text;
+      return;
+    }
+    const noise = '#%&*+=<>/\\|~';
+    const start = performance.now();
+    let frame = 0;
+    const step = (now: number) => {
+      const done = Math.min(1, (now - start) / 560);
+      const fixed = Math.floor(done * text.length);
+      let out = '';
+      for (let i = 0; i < text.length; i++)
+        out += i < fixed || text[i] === ' ' ? text[i] : noise[(Math.random() * noise.length) | 0];
+      target.textContent = out;
+      if (done < 1) frame = requestAnimationFrame(step);
+    };
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [text, run]);
+  return (
+    <>
+      <span className="story-sr">{text}</span>
+      <span ref={node} aria-hidden="true">
+        {text}
+      </span>
+    </>
   );
 }
 
@@ -393,22 +457,39 @@ export default function Story({
             <p className="story-kicker">
               <span aria-hidden="true" />
               <span className="story-kicker-text" key={index}>
-                {index === 0
-                  ? id
-                    ? 'Horor folklor Indonesia'
-                    : 'Indonesian folk horror'
-                  : (id ? 'Bab ' : 'Chapter ') + number(index) + ' · ' + chapter.location[lang]}
+                <Decode
+                  run={!reducedMotion}
+                  text={
+                    index === 0
+                      ? id
+                        ? 'Horor folklor Indonesia'
+                        : 'Indonesian folk horror'
+                      : (id ? 'Bab ' : 'Chapter ') + number(index) + ' · ' + chapter.location[lang]
+                  }
+                />
               </span>
             </p>
             {index !== 0 && <h1 className="story-sr">IndoGhost</h1>}
             <div className="story-lines" key={index}>
               {index === 0 ? (
                 <h1 className="story-wordmark">
-                  Indo<em>Ghost</em>
+                  <span className="story-sr">IndoGhost</span>
+                  <span aria-hidden="true">
+                    <Split text="Indo" letters />
+                    <em>
+                      <Split text="Ghost" letters from={1} />
+                    </em>
+                  </span>
                 </h1>
               ) : (
                 <h2 className="story-chapter-title">
-                  {chapter.title[lang]} <em>{chapter.italic[lang]}</em>
+                  <span className="story-sr">{chapter.title[lang] + ' ' + chapter.italic[lang]}</span>
+                  <span aria-hidden="true">
+                    <Split text={chapter.title[lang]} />{' '}
+                    <em>
+                      <Split text={chapter.italic[lang]} from={chapter.title[lang].split(' ').length} />
+                    </em>
+                  </span>
                 </h2>
               )}
               {index === 0 && (
@@ -418,7 +499,12 @@ export default function Story({
                     : 'Every night has a different nightmare.'}
                 </p>
               )}
-              <p className="story-narration">{chapter.text[lang]}</p>
+              <p className="story-narration">
+                <span className="story-sr">{chapter.text[lang]}</span>
+                <span aria-hidden="true">
+                  <Split text={chapter.text[lang]} />
+                </span>
+              </p>
             </div>
             <div className="story-actions">
               <button
