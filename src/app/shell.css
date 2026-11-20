@@ -54,6 +54,10 @@
 html {
   scrollbar-color: #4b5246 #0d100d;
 }
+html:has(dialog[data-opening][open]) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 ::selection {
   background: #8a4636;
   color: #fff6e9;

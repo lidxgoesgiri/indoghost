@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test } from './returning-visitor';
 
 // Walks recorded against the original seeded villages. Inputs go through the actual keyboard.
 const walks: Record<number, string> = {

@@ -2,6 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { expect, test } from '@playwright/test';
+import { markOpeningEntered } from './returning-visitor';
 
 test('salinan dari index.html lama bisa diimpor ke jurnal web', async ({ browser }) => {
   const fileUrl = pathToFileURL(path.resolve('index.html')).href;
@@ -12,6 +13,7 @@ test('salinan dari index.html lama bisa diimpor ke jurnal web', async ({ browser
     baseURL: 'http://127.0.0.1:4185',
   });
   try {
+    await webContext.addInitScript(markOpeningEntered);
     const oldPage = await fileContext.newPage();
     await oldPage.addInitScript(() => {
       localStorage.setItem('indoghost.night.v1.1', JSON.stringify({ coins: 5, flame: 2 }));

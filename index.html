@@ -9,9 +9,21 @@
     <link rel="preload" as="image" href="%BASE_URL%assets/kalisepi.webp" />
     <link rel="preload" as="font" type="font/woff2" href="%BASE_URL%assets/plus-jakarta-sans.woff2" crossorigin />
     <title>IndoGhost — Desa Kalisepi</title>
+    <style>
+      #boot-mark { min-height: 100svh; display: grid; place-content: center; justify-items: center; gap: 1.2rem; background: #080707; color: #eee4d7; }
+      #boot-mark strong { font: 500 clamp(2.8rem, 9vw, 8.5rem)/1 Georgia, serif; letter-spacing: .045em; }
+      #boot-mark a { color: #d8b4a1; font: 14px/1.5 system-ui, sans-serif; padding: .65rem; visibility: hidden; animation: boot-recovery 0s 8s forwards; }
+      @keyframes boot-recovery { to { visibility: visible; } }
+      @media (scripting: none) { #boot-mark { min-height: auto; padding-block: 2rem; } }
+    </style>
   </head>
   <body style="margin:0;background:#101310;color:#f3eee2">
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-mark">
+        <strong>INDOGHOST</strong>
+        <a href="" id="boot-retry">Muat ulang permainan</a>
+      </div>
+    </div>
     <noscript>Aktifkan JavaScript untuk memasuki Desa Kalisepi. Enable JavaScript to play.</noscript>
     <template id="file-transfer">
       <main style="max-width:36rem;margin:12vh auto;padding:1.5rem;font:17px/1.7 system-ui">
@@ -25,7 +37,7 @@
     <script>
       // Only the original file URL can read saves created by the direct-file edition.
       if (location.protocol === 'file:') {
-        document.getElementById('root').append(document.getElementById('file-transfer').content.cloneNode(true));
+        document.getElementById('root').replaceChildren(document.getElementById('file-transfer').content.cloneNode(true));
         document.getElementById('export-save').onclick = function () {
           var message = document.getElementById('export-message');
           try {
@@ -65,6 +77,10 @@
             message.textContent = 'Browser tidak dapat membaca jurnal di alamat berkas ini. Coba profil browser tempat kamu dulu bermain.';
           }
         };
+      } else {
+        // Keep a recovery action if the entry script itself stalls or fails to download.
+        var retryLink = document.getElementById('boot-retry');
+        if (!/^(id|in)\b/i.test(navigator.language)) retryLink.textContent = 'Reload the game';
       }
     </script>
     <script type="module" src="/src/main.tsx"></script>
