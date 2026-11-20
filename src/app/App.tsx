@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { asset } from '../assets';
 import { CampaignProvider, useCampaign } from '../campaign/Campaign';
 import { modeName, nights, number } from '../campaign/story';
@@ -8,10 +8,34 @@ import { Encounters } from './Encounters';
 import { Flyers } from './Flyers';
 import { FieldGuide } from './FieldGuide';
 import { Icon } from './Icon';
+import { Opening } from '../opening/Opening';
+import { needsOpening, rememberEntry } from '../opening/session';
+
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+function subscribeMotion(update: () => void) {
+  motionPreference.addEventListener('change', update);
+  return () => motionPreference.removeEventListener('change', update);
+}
+const readMotion = () => motionPreference.matches;
 
 function Village() {
   const { open, status, modalOpen, setSound, setLanguage, scene, sting } = useCampaign();
   const [guideOpen, setGuideOpen] = useState(false);
+  const [opening, setOpening] = useState(needsOpening);
+  const systemReduced = useSyncExternalStore(subscribeMotion, readMotion);
+  const entered = useRef(false);
+  const suspended = opening || modalOpen || guideOpen;
+  const finishOpening = useCallback(() => {
+    entered.current = true;
+    setOpening(false);
+  }, []);
+  useLayoutEffect(() => {
+    if (opening || !entered.current) return;
+    entered.current = false;
+    const destination = document.getElementById(location.hash.slice(1));
+    if (destination) destination.scrollIntoView({ behavior: 'instant' });
+    (destination ?? document.getElementById('village'))?.focus({ preventScroll: true });
+  }, [opening]);
   const guideTrigger = useRef<HTMLElement | null>(null);
   const id = status.lang === 'id';
   const title = status.completedAll
@@ -42,6 +66,18 @@ function Village() {
   }
   return (
     <>
+      {opening && (
+        <Opening
+          lang={status.lang}
+          reducedMotion={systemReduced || status.reducedMotion}
+          sound={status.sound}
+          onEnter={(enabled) => {
+            rememberEntry();
+            if (enabled || status.sound) setSound(enabled);
+          }}
+          onFinish={finishOpening}
+        />
+      )}
       <a className="skip-link" href="#encounters">
         {id ? 'Langsung ke pilihan permainan' : 'Skip to the games'}
       </a>
@@ -96,7 +132,7 @@ function Village() {
         <Story
           lang={status.lang}
           reducedMotion={status.reducedMotion}
-          suspended={modalOpen || guideOpen}
+          suspended={suspended}
           dread={status.horror}
           sound={status.sound}
           playLabel={title}
@@ -127,7 +163,7 @@ function Village() {
           </button>
         </div>
       </footer>
-      <Flyers active={!status.reducedMotion && !modalOpen && !guideOpen} dread={status.horror} />
+      <Flyers active={!status.reducedMotion && !suspended} dread={status.horror} />
       {guideOpen && <FieldGuide lang={status.lang} close={closeGuide} />}
     </>
   );

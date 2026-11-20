@@ -13,6 +13,8 @@ npm start
 
 Buka [pratinjau lokal](http://127.0.0.1:4173/). Seluruh gambar, font, musik sintesis dan pustaka runtime tersedia dari aplikasi. Setelah dependensi dipasang, game bisa dijalankan di komputer tanpa internet. Untuk hosting statis, jalankan `npm run build` dan layani isi direktori `dist/` melalui HTTP(S).
 
+Pada awal sesi tab, gerbang Kalisepi menampilkan kesiapan ilustrasi dan font. Aktifkan suara jika diinginkan, lalu pilih **ENTER THE VILLAGE**. Tombol **Lewati pembuka** dan tombol Esc tersedia sejak awal. Setelah masuk, memuat ulang halaman atau membuka jurnal membawa pemain langsung kembali ke desa. [Implementasi dan pengujian pembuka](docs/pembuka-sinematik.md)
+
 ## Membawa progres lama
 
 Save v1 dibaca otomatis jika browser, profil, protokol, nama host dan port sama. Alamat `localhost` dan `127.0.0.1` memiliki penyimpanan masing-masing.
@@ -34,6 +36,7 @@ Esc menjeda permainan. Preferensi gerak, intensitas horor, bahasa dan suara dapa
 React dan TypeScript mengelola antarmuka dan kampanye. Phaser menjalankan simulasi pengejaran. Solver dan patroli rumah memiliki modul aturan mandiri. GSAP, ScrollTrigger dan Lenis menyelaraskan narasi dengan gulir. React Three Fiber dan Three.js merender kamera, pencahayaan dan partikel. Aset sinematik memiliki fallback poster.
 
 ```sh
+npm run lint
 npm test
 npm run build
 npx playwright install chromium

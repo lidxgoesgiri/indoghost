@@ -151,13 +151,14 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     store.setPreferences({ ...store.snapshot().prefs, lang: language });
   }
   function setSound(enabled: boolean) {
-    const next = { ...store.snapshot().prefs, sound: enabled };
+    const previous = store.snapshot().prefs;
+    const next = { ...previous, sound: enabled };
     sound.setPreferences(next);
     if (enabled) {
       sound.unlock();
-      sound.cue('enable');
+      if (!previous.sound) sound.cue('enable');
     }
-    store.setPreferences(next);
+    if (previous.sound !== enabled) store.setPreferences(next);
   }
   function pause() {
     if (current.current.screen !== 'game') return;
@@ -277,7 +278,9 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     };
     // Browsers only start audio after a gesture. A returning player who left
     // sound on gets the village ambience from their first click or key.
-    const wake = () => sound.unlock();
+    const wake = () => {
+      if (!document.querySelector('[data-opening]')) sound.unlock();
+    };
     window.addEventListener('pointerdown', wake, { once: true });
     window.addEventListener('keydown', wake, { once: true });
     const sync = (event: StorageEvent) => {
